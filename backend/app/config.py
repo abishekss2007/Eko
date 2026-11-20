@@ -29,6 +29,11 @@ class Settings(BaseSettings):
     data_rate_limit: str = "60/minute"
     max_body_bytes: int = Field(default=16 * 1024, gt=0)
 
+    auth_rate_limit: str = "10/minute"
+    database_path: Path = Field(default=Path("data/saanssafe.db"), description="SQLite file for accounts.")
+    session_days: int = Field(default=7, ge=1, le=90)
+    cookie_secure: bool = Field(default=True, description="Send the session cookie over HTTPS only.")
+
     enable_api_docs: bool = False
     static_dir: Path | None = Field(default=None, description="Built frontend to serve at '/'.")
 

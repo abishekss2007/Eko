@@ -158,12 +158,23 @@ const ROUTES: [string, unknown][] = [
   ["/api/air", AIR],
 ];
 
-/** A fetch stub that answers every API route with a fixture. */
-export function stubFetch(): ReturnType<typeof vi.fn> {
+export type StubReply = { status: number; body?: unknown };
+
+/** A fetch stub that answers every API route with a fixture. Signed out by default; pass overrides per prefix. */
+export function stubFetch(overrides: Record<string, StubReply> = {}): ReturnType<typeof vi.fn> {
+  const replies: [string, StubReply][] = [
+    ...Object.entries(overrides),
+    ["/api/auth/me", { status: 401, body: { detail: "Not signed in." } }],
+    ...ROUTES.map(([prefix, body]): [string, StubReply] => [prefix, { status: 200, body }]),
+  ];
   const fn = vi.fn(async (input: RequestInfo | URL) => {
     const url = String(input);
-    const body = ROUTES.find(([prefix]) => url.startsWith(prefix))?.[1] ?? AIR;
-    return new Response(JSON.stringify(body), { status: 200, headers: { "Content-Type": "application/json" } });
+    const reply = replies.find(([prefix]) => url.startsWith(prefix))?.[1] ?? { status: 200, body: AIR };
+    if (reply.status === 204) return new Response(null, { status: 204 });
+    return new Response(JSON.stringify(reply.body ?? {}), {
+      status: reply.status,
+      headers: { "Content-Type": "application/json" },
+    });
   });
   vi.stubGlobal("fetch", fn);
   return fn;

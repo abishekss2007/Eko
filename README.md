@@ -26,6 +26,7 @@ Every winter, cold, still air traps smoke and dust over North Indian cities. NAQ
 | F5 | **Low-emission commute optimizer** | 8 modes, departure shift of up to ±2 h. Inhaled PM2.5 dose (µg) and CO₂ (kg) per trip, recommendation that never raises CO₂, and a **How we calculate** dialog with every formula, factor and source. |
 | F6 | **Impact tracker + civic drafter** | Logs commutes (real µg / kg from the engine) and clean-air habits in the browser. Drafts an RWA clean-air request or an open-burning complaint to the ward office. |
 | F7 | **5 languages + read aloud** | English, Hindi, Tamil, Bengali, Marathi for every Gemini explanation; `<html lang>` and Web Speech voice follow the choice. Rule-based fallback text is English. |
+| 🔑 | **Landing page, sign-up and log-in** | `/` explains the app with a clear **Create free account**, **Watch the 60-second demo** and **Continue as a guest** (no account needed). `/signup` and `/login` create a session; the app header shows who is signed in and a Log out button. |
 | ▶ | **60-second guided demo** | One button: smog spike → today's plan → family alert → SOS script read aloud → commute savings. Uses a demo family without touching saved data. |
 
 ---
@@ -108,6 +109,8 @@ All constants live in [`backend/app/data/assumptions.json`](backend/app/data/ass
 - Headers on every response: `Content-Security-Policy` (`default-src 'self'`, no inline scripts), `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy`, HSTS; `Cache-Control: no-store` on API responses.
 - 16 KB request body cap; upstream errors return a generic 502 without stack traces.
 - AI text is rendered only as React text nodes (no `dangerouslySetInnerHTML`); `tel:` links accept digits and a leading `+` only.
+- **Accounts:** passwords hashed with scrypt (n=2¹⁴, r=8, p=1, 16-byte random salt) and compared in constant time; unknown e-mails still run a dummy hash so timing doesn't reveal who has an account. Sessions are 256-bit random tokens in an `HttpOnly`, `SameSite=Strict`, `Secure` cookie scoped to `/api`; the database stores only their SHA-256, so a leaked database can't be replayed. Sign-up, log-in and log-out reject cross-site `Origin` headers and are limited to 10/min per IP. Wrong e-mail and wrong password give the same message.
+- **What an account holds:** name, e-mail and password hash only. Family members, conditions, care notes and phone numbers stay in the browser, signed in or not.
 - Container runs as a non-root user.
 
 ## Efficiency
@@ -129,8 +132,8 @@ All constants live in [`backend/app/data/assumptions.json`](backend/app/data/ass
 
 ## Testing
 
-- **Backend:** 102 pytest tests, about 97% coverage. Engines (NAQI breakpoints including 273.4 → 418, inversion, window, risk tiers, CADR sizing, budget ranking, commute dose/CO₂ and departure shift, daily plan), grounding checker, sanitizer, cache, Gemini wrapper, and API tests with a mocked Open-Meteo transport: 422 validation, 413 body cap, 429 rate limit, 502 upstream failure, fallback without a key, rejection of invented numbers and dosing, cache hits, and a check that phone numbers never reach the prompt.
-- **Frontend:** Vitest + Testing Library + vitest-axe: tokenization and PII stripping, `tel:` sanitising, every planner component, the How-we-calculate dialog, impact totals, language switching, the guided demo (fake timers) and full-app flows, with axe accessibility checks (21 tests).
+- **Backend:** 117 pytest tests, about 97% coverage. Engines (NAQI breakpoints including 273.4 → 418, inversion, window, risk tiers, CADR sizing, budget ranking, commute dose/CO₂ and departure shift, daily plan), grounding checker, sanitizer, cache, Gemini wrapper, and API tests with a mocked Open-Meteo transport: 422 validation, 413 body cap, 429 rate limit, 502 upstream failure, fallback without a key, rejection of invented numbers and dosing, cache hits, and a check that phone numbers never reach the prompt.
+- **Frontend:** Vitest + Testing Library + vitest-axe: tokenization and PII stripping, `tel:` sanitising, every planner component, the How-we-calculate dialog, impact totals, language switching, the guided demo (fake timers), landing, sign-up, log-in, wrong-password and log-out flows, and full-app flows, with axe accessibility checks (29 tests).
 - **CI:** `.github/workflows/ci.yml` runs ruff, mypy (strict), pytest with coverage, ESLint, TypeScript, Vitest, a production build, and a Docker build with a smoke test.
 
 ---
@@ -142,7 +145,9 @@ docker build -t saanssafe .
 docker run -p 8080:8080 --env-file backend/.env saanssafe
 ```
 
-Open http://localhost:8080 and press **60-second demo**.
+Open http://localhost:8080 for the landing page, or http://localhost:8080/app?demo=1 to jump straight into the guided demo.
+
+Accounts live in SQLite at `/app/data/saanssafe.db`. To keep them when the container is rebuilt, add a volume: `docker run -p 8080:8080 --env-file backend/.env -v saanssafe-data:/app/data saanssafe`. If you open the app over plain HTTP from another machine (not `localhost`), set `COOKIE_SECURE=false` so the browser accepts the session cookie.
 
 ## Run locally
 
@@ -173,7 +178,7 @@ gcloud run deploy saanssafe --source . --region asia-south1 --allow-unauthentica
   --set-secrets GEMINI_API_KEY=gemini-api-key:latest
 ```
 
-The multi-stage `Dockerfile` builds the frontend, installs the API and serves both on `$PORT`.
+The multi-stage `Dockerfile` builds the frontend, installs the API and serves both on `$PORT`. Cloud Run's disk is temporary, so for lasting accounts mount a Cloud Storage or Filestore volume at `/app/data`; guests and the demo need nothing.
 
 ---
 

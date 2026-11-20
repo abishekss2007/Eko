@@ -10,17 +10,33 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.responses import Response
+from starlette.types import Scope
 
 from app.config import Settings, get_settings
-from app.routers import air, health, planner, shield
+from app.routers import air, auth, health, planner, shield
 from app.security import BodySizeLimitMiddleware, SecurityHeadersMiddleware, limiter
 from app.services.air_service import AirService, UpstreamError
+from app.services.auth_service import AuthService
 from app.services.gemini_service import NarrativeModel, build_narrative_model
 from app.services.narrator import Narrator
 from app.services.planner_service import PlannerService
 from app.services.shield_service import ShieldService
 
 logger = logging.getLogger("saanssafe")
+
+
+class SpaStaticFiles(StaticFiles):
+    """Serve index.html for client-side routes such as /login, /signup and /app."""
+
+    async def get_response(self, path: str, scope: Scope) -> Response:
+        try:
+            return await super().get_response(path, scope)
+        except StarletteHTTPException as exc:
+            if exc.status_code != 404 or path.startswith("api/") or "." in path.rsplit("/", 1)[-1]:
+                raise
+            return await super().get_response("index.html", scope)
 
 
 def create_app(
@@ -44,9 +60,12 @@ def create_app(
         app.state.shield_service = ShieldService(air_service, narrator)
         app.state.planner_service = PlannerService(air_service, narrator)
         app.state.ai_enabled = narrator.enabled
+        app.state.auth_service = AuthService(settings.database_path, settings.session_days)
+        app.state.cookie_secure = settings.cookie_secure
         try:
             yield
         finally:
+            app.state.auth_service.close()
             if http_client is None:
                 await client.aclose()
 
@@ -68,11 +87,11 @@ def create_app(
     app.add_middleware(BodySizeLimitMiddleware, max_bytes=settings.max_body_bytes)
     app.add_middleware(SecurityHeadersMiddleware)
 
-    for module in (health, air, shield, planner):
+    for module in (health, auth, air, shield, planner):
         app.include_router(module.router)
 
     if settings.static_dir and settings.static_dir.is_dir():
-        app.mount("/", StaticFiles(directory=settings.static_dir, html=True), name="frontend")
+        app.mount("/", SpaStaticFiles(directory=settings.static_dir, html=True), name="frontend")
     return app
 
 

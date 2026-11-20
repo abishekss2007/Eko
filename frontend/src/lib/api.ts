@@ -23,19 +23,25 @@ export class ApiError extends Error {
   }
 }
 
+/** A safe, human message: the server's own text for 4xx, generic text otherwise. */
+async function errorMessage(response: Response): Promise<string> {
+  if (response.status === 429) return "Too many requests. Please wait a minute and try again.";
+  if (response.status >= 500) return "The service is temporarily unavailable. Please try again.";
+  if (response.status === 422) return "Please check the details and try again.";
+  const detail = await response
+    .json()
+    .then((b: { detail?: unknown }) => b.detail)
+    .catch(() => undefined);
+  return typeof detail === "string" ? detail : "The request could not be processed.";
+}
+
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const response = await fetch(path, {
     ...init,
     headers: { Accept: "application/json", ...(init.body ? { "Content-Type": "application/json" } : {}) },
   });
   if (!response.ok) {
-    const message =
-      response.status === 429
-        ? "Too many requests. Please wait a minute and try again."
-        : response.status >= 500
-          ? "Air-quality data is temporarily unavailable."
-          : "The request could not be processed.";
-    throw new ApiError(message, response.status);
+    throw new ApiError(await errorMessage(response), response.status);
   }
   return (await response.json()) as T;
 }
@@ -58,3 +64,16 @@ export const fetchPlan = (body: PlanRequest, signal?: AbortSignal) => post<PlanR
 export const fetchIndoor = (body: IndoorRequest) => post<IndoorResponse>("/api/indoor", body);
 export const fetchCommute = (body: CommuteRequest) => post<CommuteResponse>("/api/commute", body);
 export const fetchCivic = (body: CivicRequest) => post<CivicResponse>("/api/civic", body);
+
+export interface Account {
+  id: number;
+  name: string;
+  email: string;
+}
+
+export const signUp = (body: { name: string; email: string; password: string }) => post<Account>("/api/auth/signup", body);
+export const logIn = (body: { email: string; password: string }) => post<Account>("/api/auth/login", body);
+export const fetchMe = () => request<Account>("/api/auth/me");
+export async function logOut(): Promise<void> {
+  await fetch("/api/auth/logout", { method: "POST" });
+}

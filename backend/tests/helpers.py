@@ -3,6 +3,7 @@
 from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 from typing import Any
 
 import httpx
@@ -93,6 +94,9 @@ def make_settings(**overrides: Any) -> Settings:
         "gemini_api_key": None,
         "ai_rate_limit": "1000/minute",
         "data_rate_limit": "1000/minute",
+        "auth_rate_limit": "1000/minute",
+        "database_path": Path(":memory:"),
+        "cookie_secure": False,
         **overrides,
     }
     return Settings(**values)

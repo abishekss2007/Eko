@@ -2,11 +2,14 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "vitest-axe";
 import App from "../App";
+import { navigate } from "../lib/router";
 import { LanguageProvider } from "../lib/language";
 import { speak } from "../lib/speech";
 import { stubFetch } from "./fixtures";
 
 describe("App", () => {
+  beforeEach(() => navigate("/app"));
+
   it("loads the dashboard with no accessibility violations", async () => {
     stubFetch();
     const { container } = render(<LanguageProvider><App /></LanguageProvider>);
@@ -53,6 +56,8 @@ describe("App", () => {
 vi.mock("../lib/speech", () => ({ canSpeak: () => false, speak: vi.fn(), stopSpeaking: vi.fn() }));
 
 describe("App extras", () => {
+  beforeEach(() => navigate("/app"));
+
   it("shows today's plan and switches the advice language", async () => {
     const fetchMock = stubFetch();
     render(<LanguageProvider><App /></LanguageProvider>);

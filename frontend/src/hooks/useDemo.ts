@@ -44,8 +44,8 @@ export const DEMO_STEPS: DemoStep[] = [
   },
 ];
 
-export function useDemo(onAction: (action: DemoStep["action"]) => void, onEnd: () => void) {
-  const [step, setStep] = useState(-1);
+export function useDemo(autoStart: boolean, onAction: (action: DemoStep["action"]) => void, onEnd: () => void) {
+  const [step, setStep] = useState(autoStart ? 0 : -1);
   const actions = useRef(onAction);
   const end = useRef(onEnd);
   useEffect(() => {

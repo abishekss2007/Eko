@@ -64,3 +64,7 @@ jobs:
           for i in $(seq 1 20); do curl -fs localhost:8080/api/health && break; sleep 1; done
           curl -fs "localhost:8080/api/air?lat=28.61&lon=77.21&simulate=true" | grep -q '"value":418'
           curl -fsI localhost:8080/ | grep -qi content-security-policy
+          curl -fs localhost:8080/login | grep -q '<div id="root">'
+          curl -fs -c jar -H 'Content-Type: application/json' \
+            -d '{"name":"CI","email":"ci@example.com","password":"ci-smoke-test-1"}' localhost:8080/api/auth/signup
+          echo "accounts writable in the container"

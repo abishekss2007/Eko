@@ -4,8 +4,10 @@ import { afterEach, expect } from "vitest";
 import * as axeMatchers from "vitest-axe/matchers";
 
 expect.extend(axeMatchers);
+window.scrollTo = () => {};
 
 afterEach(() => {
   cleanup();
   window.localStorage.clear();
+  window.history.replaceState({}, "", "/");
 });
