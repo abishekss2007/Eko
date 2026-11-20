@@ -1,0 +1,83 @@
+{
+  "_about": "Every constant the deterministic engines use lives here, next to its source. The Gemini layer never sees or changes these values; it only receives the numbers computed from them.",
+  "naqi": {
+    "source": "Central Pollution Control Board (CPCB), National Air Quality Index, Control of Urban Pollution Series CUPS/82/2014-15, Table 3 (breakpoints) and Table 4 (health statements).",
+    "averaging_note": "CPCB defines PM2.5, PM10 and NO2 sub-indices on 24-hour averages. The engine averages the trailing 24 hourly readings when at least 16 are available (the CPCB minimum) and otherwise falls back to the latest hourly value, flagging the result as indicative.",
+    "min_hours_for_24h_average": 16,
+    "categories": [
+      {"name": "Good", "aqi_low": 0, "aqi_high": 50, "color": "#00b050", "health_impact": "Minimal impact."},
+      {"name": "Satisfactory", "aqi_low": 51, "aqi_high": 100, "color": "#92d050", "health_impact": "May cause minor breathing discomfort to sensitive people."},
+      {"name": "Moderate", "aqi_low": 101, "aqi_high": 200, "color": "#ffff00", "health_impact": "May cause breathing discomfort to people with lung disease such as asthma, and discomfort to people with heart disease, children and older adults."},
+      {"name": "Poor", "aqi_low": 201, "aqi_high": 300, "color": "#ff9900", "health_impact": "May cause breathing discomfort to people on prolonged exposure, and discomfort to people with heart disease."},
+      {"name": "Very Poor", "aqi_low": 301, "aqi_high": 400, "color": "#ff0000", "health_impact": "May cause respiratory illness to people on prolonged exposure. Effect may be more pronounced in people with lung and heart diseases."},
+      {"name": "Severe", "aqi_low": 401, "aqi_high": 500, "color": "#c00000", "health_impact": "May cause respiratory effects even on healthy people, and serious health impacts on people with lung or heart disease."}
+    ],
+    "breakpoints_ug_m3": {
+      "pm2_5": [[0, 30], [30, 60], [60, 90], [90, 120], [120, 250], [250, 380]],
+      "pm10": [[0, 50], [50, 100], [100, 250], [250, 350], [350, 430], [430, 510]],
+      "no2": [[0, 40], [40, 80], [80, 180], [180, 280], [280, 400], [400, 520]]
+    },
+    "index_bands": [[0, 50], [50, 100], [100, 200], [200, 300], [300, 400], [400, 500]]
+  },
+  "inversion": {
+    "source": "App heuristic for winter smog trapping. 90 ug/m3 PM2.5 is the lower bound of the CPCB 'Poor' band. Wind below 8 km/h (about 2.2 m/s) and cold surface air below 15 C indicate poor vertical mixing and low ventilation, the conditions IITM-Pune and CPCB describe for Delhi-NCR winter smog episodes.",
+    "max_temperature_c": 15,
+    "max_wind_kmh": 8,
+    "min_pm2_5_ug_m3": 90
+  },
+  "outdoor_window": {
+    "source": "App heuristic: daylight activity hours, cleanest contiguous slot by mean forecast PM2.5 (Open-Meteo CAMS forecast).",
+    "earliest_start_hour": 6,
+    "latest_end_hour": 21,
+    "duration_hours": 2,
+    "lookahead_hours": 24
+  },
+  "risk": {
+    "source": "Tier mapping derived from the CPCB NAQI health statements above: sensitive groups (children, older adults, people with lung or heart disease) are affected one band earlier than the general public. MoHFW NPCCHH air pollution health advisories list the same vulnerable groups.",
+    "levels": ["low", "moderate", "high", "very_high", "emergency"],
+    "general_public_by_category": {
+      "Good": "low",
+      "Satisfactory": "low",
+      "Moderate": "moderate",
+      "Poor": "high",
+      "Very Poor": "very_high",
+      "Severe": "very_high"
+    },
+    "vulnerable_age_groups": ["infant", "child", "senior"],
+    "medical_sensitivities": ["asthma", "copd", "heart_disease", "pregnancy", "diabetes"],
+    "inversion_sensitive_conditions": ["asthma", "copd", "heart_disease"],
+    "emergency_requires_medical_sensitivity": true,
+    "alert_threshold": "high"
+  },
+  "red_flags": {
+    "source": "Danger signs adapted from MoHFW NPCCHH air pollution advisories and NHS guidance on asthma attacks, heart attack and breathing problems in babies. These are prompts to seek care, not a diagnosis.",
+    "general": [
+      "Breathlessness while resting or unable to speak in full sentences",
+      "Chest pain, tightness or pressure",
+      "Bluish or grey lips, face or fingertips",
+      "Confusion, unusual drowsiness or fainting",
+      "Wheezing or coughing that does not settle with the usual prescribed reliever"
+    ],
+    "by_condition": {
+      "heart_disease": ["Chest pain spreading to the arm, jaw or back", "Sudden irregular or racing heartbeat"],
+      "pregnancy": ["Dizziness or fainting during pregnancy", "Noticeably reduced baby movements"],
+      "infant": ["Very fast breathing, or the skin between the ribs pulling in", "Not feeding, or unusually floppy or hard to wake"],
+      "diabetes": ["Very high or very low sugar readings with breathlessness or confusion"]
+    }
+  },
+  "emergency_numbers": {
+    "source": "108: state Emergency Medical Services ambulance line in most Indian states. 112: India Emergency Response Support System (ERSS), Ministry of Home Affairs.",
+    "ambulance": "108",
+    "national_emergency": "112"
+  },
+  "simulation": {
+    "source": "Fixed demo scenario so evaluators can test alerts and SOS regardless of live conditions. PM2.5 273.4 ug/m3 maps to NAQI 418 (Severe) with the CPCB breakpoints above.",
+    "pm2_5": 273.4,
+    "pm10": 410,
+    "no2": 92,
+    "temperature_c": 9,
+    "relative_humidity": 88,
+    "wind_kmh": 3,
+    "afternoon_clean_pm2_5": 138
+  }
+}
