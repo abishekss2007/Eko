@@ -128,10 +128,11 @@ Requirements: Python 3.12+, Node 22+.
 ```bash
 # Backend
 cd backend
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements-dev.txt
-cp ../.env.example .env   # optional: add GEMINI_API_KEY
-uvicorn app.main:app --reload --port 8000
+python -m venv .venv
+source .venv/bin/activate          # Windows PowerShell: .venv\Scripts\Activate.ps1
+python -m pip install -r requirements-dev.txt
+cp ../.env.example .env            # optional: add GEMINI_API_KEY (Windows: copy ..\.env.example .env)
+python -m uvicorn app.main:app --reload --port 8000
 
 # Frontend (second terminal)
 cd frontend
