@@ -1,7 +1,8 @@
 // SaansSafe service worker: keeps the app shell and the last air reading available offline.
 // SOS phone numbers live in localStorage, so the SOS panel works offline too.
-const SHELL = "saanssafe-shell-v1";
-const DATA = "saanssafe-data-v1";
+// Bump these names whenever caching rules change: activate() deletes every other cache.
+const SHELL = "saanssafe-shell-v2";
+const DATA = "saanssafe-data-v2";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(SHELL).then((cache) => cache.addAll(["/", "/favicon.svg"])));
@@ -40,18 +41,34 @@ self.addEventListener("fetch", (event) => {
   }
   if (url.pathname.startsWith("/api/")) return;
 
-  // App shell: stale-while-revalidate.
+  // Pages (/, /login, /signup, /app): network first, so a new build shows up on the next load.
+  // The cached copy is only an offline fallback.
+  if (request.mode === "navigate") {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(SHELL).then((cache) => cache.put("/", copy));
+          }
+          return response;
+        })
+        .catch(() => caches.match("/").then((hit) => hit || Response.error())),
+    );
+    return;
+  }
+
+  // Hashed build assets never change under the same name: cache first is safe.
   event.respondWith(
     caches.open(SHELL).then((cache) =>
-      cache.match(request).then((hit) => {
-        const network = fetch(request)
-          .then((response) => {
+      cache.match(request).then(
+        (hit) =>
+          hit ||
+          fetch(request).then((response) => {
             if (response.ok) cache.put(request, response.clone());
             return response;
-          })
-          .catch(() => hit || cache.match("/"));
-        return hit || network;
-      }),
+          }),
+      ),
     ),
   );
 });

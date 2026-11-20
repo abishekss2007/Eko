@@ -114,9 +114,14 @@ async def test_accounts_persist_in_sqlite_file(tmp_path: Path) -> None:
 
 async def test_spa_routes_serve_index(tmp_path: Path) -> None:
     (tmp_path / "index.html").write_text("<!doctype html><title>SaansSafe</title>")
+    (tmp_path / "assets").mkdir()
+    (tmp_path / "assets" / "app-1234.js").write_text("console.log(1)")
     async with api_client(settings=make_settings(static_dir=tmp_path)) as client:
         for path in ("/", "/login", "/signup", "/app"):
             response = await client.get(path)
             assert response.status_code == 200 and "SaansSafe" in response.text, path
+            assert response.headers["cache-control"] == "no-cache", path
+        asset = await client.get("/assets/app-1234.js")
+        assert asset.status_code == 200 and "immutable" in asset.headers["cache-control"]
         assert (await client.get("/missing.js")).status_code == 404
         assert (await client.get("/api/nope")).status_code == 404
