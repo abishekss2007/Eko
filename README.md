@@ -122,7 +122,9 @@ All constants live in [`backend/app/data/assumptions.json`](backend/app/data/ass
 
 ## Accessibility (WCAG 2.1 AA)
 
-- NAQI shown with colour **and** icon **and** text; text colour chosen per band for contrast.
+- NAQI shown with colour **and** icon **and** text on an animated half-dial gauge (one summary label for screen readers); the sweep and glow are off under `prefers-reduced-motion`.
+- Light and dark themes (follows the system, with a toggle). Every colour is a CSS variable and the dark scale mirrors the light one, so each text/background pair keeps its contrast; axe-core in a real browser reports no issues in either theme at desktop and phone widths.
+- App views (Today, Family & SOS, Home air, Commute, Impact): a bottom bar on phones and a sidebar on desktop, with the current view marked `aria-current` and focus moved to the new view. SOS stays one tap away in the header.
 - Skip link, landmark regions with headings, visible focus rings, 44 px touch targets.
 - Labelled form fields, grouped checkboxes in `fieldset`/`legend`, character counter tied with `aria-describedby`.
 - `aria-live` for loading and results, `role="alert"` for smog alerts, `role="switch"` for the simulation.

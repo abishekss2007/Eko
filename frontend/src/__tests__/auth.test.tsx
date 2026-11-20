@@ -39,7 +39,7 @@ describe("landing page", () => {
     await userEvent.click(guest as HTMLElement);
     expect(window.location.pathname).toBe("/app");
     expect(await screen.findByText(/NAQI 418, Severe/)).toBeInTheDocument();
-    expect(screen.getByText("Guest")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Log in.*guest/ })).toHaveAttribute("href", "/login");
   });
 });
 

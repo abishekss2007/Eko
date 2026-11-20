@@ -31,6 +31,7 @@ describe("App", () => {
   it("runs the Family Health Shield without sending names or phone numbers", async () => {
     const fetchMock = stubFetch();
     render(<LanguageProvider><App /></LanguageProvider>);
+    await userEvent.click(screen.getByRole("button", { name: "Family" }));
     await userEvent.click(screen.getByRole("button", { name: /Add family member/ }));
     const name = screen.getByLabelText(/Name \(stays on this device\)/);
     await userEvent.clear(name);
@@ -86,5 +87,49 @@ describe("App extras", () => {
     expect(screen.queryByText(/Showing a demo family/)).toBeNull();
     expect(window.localStorage.getItem("saanssafe.household")).not.toContain("Dadi");
     vi.useRealTimers();
+  });
+});
+
+describe("App navigation", () => {
+  beforeEach(() => navigate("/app"));
+
+  it("switches views from the section bar and remembers the view in the address", async () => {
+    stubFetch();
+    render(<LanguageProvider><App /></LanguageProvider>);
+    const today = screen.getByRole("button", { name: "Today" });
+    expect(today).toHaveAttribute("aria-current", "page");
+    await userEvent.click(screen.getByRole("button", { name: "Commute" }));
+    expect(screen.getByRole("button", { name: "Commute" })).toHaveAttribute("aria-current", "page");
+    expect(today).not.toHaveAttribute("aria-current");
+    expect(window.location.hash).toBe("#commute");
+    expect(screen.getByRole("heading", { name: /Cleaner, low-emission commute/ })).toBeVisible();
+  });
+
+  it("opens the SOS panel from the header in one tap", async () => {
+    stubFetch();
+    render(<LanguageProvider><App /></LanguageProvider>);
+    await userEvent.click(screen.getByRole("link", { name: "SOS" }));
+    expect(screen.getByRole("heading", { name: "Emergency SOS" })).toBeVisible();
+    await waitFor(() => expect(document.getElementById("sos")).toHaveFocus());
+  });
+
+  it("opens the view named in the link", () => {
+    stubFetch();
+    window.history.replaceState({}, "", "/app#family");
+    render(<LanguageProvider><App /></LanguageProvider>);
+    expect(screen.getByRole("button", { name: "Family" })).toHaveAttribute("aria-current", "page");
+  });
+
+  it("toggles dark mode and remembers it", async () => {
+    stubFetch();
+    render(<LanguageProvider><App /></LanguageProvider>);
+    const toggle = screen.getByRole("button", { name: "Dark mode" });
+    expect(toggle).toHaveAttribute("aria-pressed", "false");
+    await userEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-pressed", "true");
+    expect(document.documentElement.dataset.theme).toBe("dark");
+    expect(window.localStorage.getItem("saanssafe.theme")).toBe("dark");
+    await userEvent.click(toggle);
+    expect(document.documentElement.dataset.theme).toBe("light");
   });
 });

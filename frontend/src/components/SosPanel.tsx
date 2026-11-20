@@ -15,7 +15,7 @@ interface Props {
 function CallLink({ href, icon, label, detail }: { href: string | null; icon: ReactNode; label: string; detail: string }) {
   if (!href) {
     return (
-      <p className="flex min-h-[64px] items-center gap-3 rounded-xl border-2 border-dashed border-slate-400 p-3 text-slate-700">
+      <p className="flex min-h-[64px] items-center gap-3 rounded-2xl border-2 border-dashed border-slate-400 p-3 text-slate-700">
         {icon}
         <span>
           <span className="block font-bold">{label}</span>
@@ -27,7 +27,7 @@ function CallLink({ href, icon, label, detail }: { href: string | null; icon: Re
   return (
     <a
       href={href}
-      className="flex min-h-[64px] items-center gap-3 rounded-xl bg-red-800 p-3 text-white hover:bg-red-900 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-red-900"
+      className="flex min-h-[64px] items-center gap-3 rounded-2xl bg-gradient-to-br from-[#b91c1c] to-[#991b1b] p-3 text-snow shadow-sm transition hover:-translate-y-px hover:shadow-md focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-red-600"
     >
       {icon}
       <span>
@@ -80,7 +80,7 @@ export function SosPanel({ doctorPhone, hospitalPhone, ambulance, emergency, han
         />
       </div>
 
-      <div className="rounded-xl border-2 border-slate-800 p-4">
+      <div className="rounded-2xl border border-slate-300 bg-slate-50 p-4">
         <h3 className="mb-1 text-lg font-bold">30-second doctor handoff</h3>
         <p className="mb-3 text-sm text-slate-700">Read this out when the call connects.</p>
         <p className="mb-3 text-lg">{handoff}</p>
@@ -96,7 +96,7 @@ export function SosPanel({ doctorPhone, hospitalPhone, ambulance, emergency, han
       </div>
 
       {redFlags.length > 0 && (
-        <div className="rounded-xl border-2 border-red-800 bg-red-50 p-4 text-red-950">
+        <div className="rounded-2xl border border-red-300 bg-red-50 p-4 text-red-950">
           <h3 className="mb-2 flex items-center gap-2 text-lg font-bold">
             <ShieldAlert aria-hidden="true" size={22} /> Call now if you see
           </h3>

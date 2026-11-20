@@ -13,7 +13,7 @@ const BANDS: Record<string, BandStyle> = {
   Moderate: { className: "bg-naqi-moderate text-black", Icon: Meh },
   Poor: { className: "bg-naqi-poor text-black", Icon: Frown },
   "Very Poor": { className: "bg-naqi-verypoor text-black", Icon: AlertTriangle },
-  Severe: { className: "bg-naqi-severe text-white", Icon: Siren },
+  Severe: { className: "bg-naqi-severe text-snow", Icon: Siren },
 };
 
 export function bandStyle(category: string): BandStyle {

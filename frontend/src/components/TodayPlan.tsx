@@ -5,15 +5,24 @@ import type { PlanResponse } from "../types";
 import { ReadAloudButton } from "./ReadAloudButton";
 
 const STANCE = {
-  stay_in: { label: "Stay in", className: "border-red-900 bg-red-900 text-white", Icon: Home },
-  limit: { label: "Limit time outside", className: "border-orange-800 bg-orange-100 text-orange-950", Icon: Clock },
-  normal: { label: "Normal day", className: "border-green-800 bg-green-100 text-green-950", Icon: Sun },
+  stay_in: { label: "Stay in", className: "bg-gradient-to-br from-[#991b1b] to-[#881337] text-snow shadow-lg shadow-black/20", Icon: Home },
+  limit: { label: "Limit time outside", className: "bg-gradient-to-br from-orange-100 to-amber-50 text-orange-950 ring-1 ring-orange-200", Icon: Clock },
+  normal: { label: "Normal day", className: "bg-gradient-to-br from-green-100 to-emerald-50 text-green-950 ring-1 ring-green-200", Icon: Sun },
 } as const;
 
 /** The hero card: one decision for the family today, decided by code, phrased by Gemini. */
 export function TodayPlan({ data, members, loading }: { data: PlanResponse | null; members: Member[]; loading: boolean }) {
   if (!data) {
-    return <p aria-busy={loading}>{loading ? "Working out today's plan…" : "Choose a location to see today's plan."}</p>;
+    return <div aria-busy={loading} className="space-y-3">
+        <p>{loading ? "Working out today's plan…" : "Choose a location to see today's plan."}</p>
+        {loading && (
+          <div aria-hidden="true" className="space-y-2">
+            <div className="h-7 w-3/4 animate-pulse rounded-lg bg-slate-200" />
+            <div className="h-4 w-full animate-pulse rounded bg-slate-100" />
+            <div className="h-4 w-5/6 animate-pulse rounded bg-slate-100" />
+          </div>
+        )}
+      </div>;
   }
   const { plan, narrative } = data;
   const stance = STANCE[plan.stance];
@@ -21,14 +30,19 @@ export function TodayPlan({ data, members, loading }: { data: PlanResponse | nul
   const spoken = [narrative.headline, ...narrative.steps].map(show).join(". ");
 
   return (
-    <div className={`rounded-2xl border-2 p-5 ${stance.className}`}>
-      <p className="mb-2 inline-flex items-center gap-2 rounded-full bg-white/90 px-3 py-1 text-sm font-bold text-slate-900">
+    <div className={`rounded-3xl p-5 sm:p-6 ${stance.className}`}>
+      <p className="mb-3 inline-flex items-center gap-2 rounded-full bg-snow/95 px-3 py-1 text-sm font-bold text-ink-900">
         <stance.Icon aria-hidden="true" size={16} /> {stance.label}
       </p>
-      <p className="mb-3 text-2xl font-extrabold leading-snug">{show(narrative.headline)}</p>
-      <ol className="mb-4 list-decimal space-y-1 pl-6 text-lg">
-        {narrative.steps.map((step) => (
-          <li key={step}>{show(step)}</li>
+      <p className="mb-4 text-2xl font-extrabold leading-snug sm:text-3xl">{show(narrative.headline)}</p>
+      <ol className="mb-5 space-y-2 text-lg">
+        {narrative.steps.map((step, i) => (
+          <li key={step} className="flex gap-3">
+            <span aria-hidden="true" className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full text-sm font-bold ring-1 ring-current">
+              {i + 1}
+            </span>
+            <span>{show(step)}</span>
+          </li>
         ))}
       </ol>
       <div className="flex flex-wrap items-center gap-3">

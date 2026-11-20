@@ -11,9 +11,12 @@ import {
   ShieldCheck,
   Siren,
   TrainFront,
+  Wind,
 } from "lucide-react";
 import { useEffect, useRef } from "react";
+import { NaqiGauge } from "../components/NaqiGauge";
 import { Link } from "../lib/router";
+import { ThemeToggle } from "../lib/theme";
 
 const FEATURES = [
   { Icon: Siren, title: "Live smog + winter trap alert", text: "Indian CPCB NAQI with a detector for cold, still air that traps smog where your family breathes." },
@@ -42,73 +45,86 @@ export function LandingPage() {
       <a href="#main" className="skip-link">
         Skip to main content
       </a>
-      <header className="bg-slate-950 text-white">
-        <nav aria-label="Main" className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-4">
-          <Link href="/" className="text-2xl font-extrabold">
-            SaansSafe
-          </Link>
-          <div className="flex flex-wrap gap-2">
-            <Link href="/login" className="btn border-2 border-white text-white hover:bg-slate-800">
-              Log in
+      <header className="absolute inset-x-0 top-0 z-10 text-snow">
+          <nav aria-label="Main" className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-5">
+            <Link href="/" className="flex items-center gap-2 text-2xl font-black text-snow">
+              <span aria-hidden="true" className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-[#14b8a6] to-[#0284c7]">
+                <Wind size={20} />
+              </span>
+              SaansSafe
             </Link>
-            <Link href="/signup" className="btn bg-sky-300 text-slate-950 hover:bg-sky-200">
-              Sign up free
-            </Link>
-          </div>
-        </nav>
+            <div className="flex flex-wrap items-center gap-2">
+              <ThemeToggle className="btn text-snow hover:bg-snow/10" />
+              <Link href="/login" className="btn text-snow ring-1 ring-snow/30 hover:bg-snow/10">
+                Log in
+              </Link>
+              <Link href="/signup" className="btn bg-snow text-ink-950 hover:bg-ink-100">
+                Sign up free
+              </Link>
+            </div>
+          </nav>
       </header>
 
       <main id="main">
-        <section aria-labelledby="hero-title" className="bg-gradient-to-b from-slate-950 via-slate-900 to-sky-950 text-white">
-          <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-14 lg:grid-cols-2">
-            <div>
-              <p className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm">
-                <ShieldCheck aria-hidden="true" size={16} /> Built for Indian winters
-              </p>
-              <h1 id="hero-title" ref={heading} className="mb-4 text-4xl font-extrabold leading-tight sm:text-5xl">
-                Breathe safer through winter smog.
-              </h1>
-              <p className="mb-8 max-w-xl text-lg text-slate-200">
-                SaansSafe tells your family when it is safe to step out, who should stay in, what to do at home,
-                and who to call when breathing gets hard. One plan, every morning.
-              </p>
-              <div className="flex flex-wrap gap-3">
-                <Link href="/signup" className="btn bg-sky-300 px-6 text-lg text-slate-950 hover:bg-sky-200">
-                  Create free account <ArrowRight aria-hidden="true" size={20} />
-                </Link>
-                <Link href="/app?demo=1" className="btn border-2 border-white px-6 text-lg text-white hover:bg-slate-800">
-                  <PlayCircle aria-hidden="true" size={20} /> Watch the 60-second demo
-                </Link>
-              </div>
-              <p className="mt-4 text-slate-300">
-                Just looking?{" "}
-                <Link href="/app" className="font-semibold text-white underline underline-offset-4">
-                  Continue as a guest
-                </Link>
-                . No account needed.
-              </p>
+          <section aria-labelledby="hero-title" className="relative isolate overflow-hidden bg-ink-950 text-snow">
+            <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
+              <div className="absolute -left-40 -top-40 h-[32rem] w-[32rem] rounded-full bg-[#14b8a6] opacity-25 blur-[120px]" />
+              <div className="absolute -right-32 top-24 h-[28rem] w-[28rem] rounded-full bg-[#c00000] opacity-25 blur-[120px]" />
+              <div className="absolute bottom-0 left-1/3 h-72 w-72 rounded-full bg-[#0284c7] opacity-20 blur-[100px]" />
             </div>
-
-            <figure className="rounded-3xl bg-white p-5 text-slate-900 shadow-2xl">
-              <figcaption className="mb-3 text-sm font-semibold text-slate-600">Example: a severe smog morning in Delhi</figcaption>
-              <div className="mb-4 flex items-center gap-4">
-                <div className="rounded-2xl bg-naqi-severe px-5 py-3 text-white">
-                  <p className="text-4xl font-extrabold leading-none">418</p>
-                  <p className="font-bold">Severe</p>
+            <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 pb-20 pt-32 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:pt-36">
+              <div className="view-enter">
+                <p className="mb-5 inline-flex items-center gap-2 rounded-full bg-snow/10 px-3 py-1 text-sm text-ink-100 ring-1 ring-snow/15">
+                  <ShieldCheck aria-hidden="true" size={16} /> Built for Indian winters · CPCB NAQI
+                </p>
+                <h1 id="hero-title" ref={heading} className="mb-5 text-5xl font-black leading-[1.05] tracking-tight sm:text-6xl">
+                  Breathe safer through{" "}
+                  <span className="bg-gradient-to-r from-[#5eead4] via-[#7dd3fc] to-[#fca5a5] bg-clip-text text-transparent">
+                    winter smog.
+                  </span>
+                </h1>
+                <p className="mb-9 max-w-xl text-lg leading-relaxed text-ink-200 sm:text-xl">
+                  SaansSafe tells your family when it is safe to step out, who should stay in, what to do at home,
+                  and who to call when breathing gets hard. One plan, every morning.
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <Link
+                    href="/signup"
+                    className="btn bg-[#5eead4] px-6 text-lg text-ink-950 shadow-lg shadow-[#14b8a6]/30 hover:-translate-y-0.5 hover:bg-[#99f6e4]"
+                  >
+                    Create free account <ArrowRight aria-hidden="true" size={20} />
+                  </Link>
+                  <Link href="/app?demo=1" className="btn px-6 text-lg text-snow ring-1 ring-snow/30 hover:bg-snow/10">
+                    <PlayCircle aria-hidden="true" size={20} /> Watch the 60-second demo
+                  </Link>
                 </div>
-                <p className="font-semibold">Cold, still air is trapping smog near the ground.</p>
+                <p className="mt-5 text-ink-300">
+                  Just looking?{" "}
+                  <Link href="/app" className="font-semibold text-snow underline decoration-[#5eead4] decoration-2 underline-offset-4">
+                    Continue as a guest
+                  </Link>
+                  . No account needed.
+                </p>
               </div>
-              <div className="rounded-2xl bg-red-900 p-4 text-white">
-                <p className="mb-2 text-lg font-bold">Today: keep Dadi indoors. Go out only 2–4 PM.</p>
-                <ul className="list-disc space-y-1 pl-5">
-                  <li>Run the purifier in Dadi&apos;s room, doors closed.</li>
-                  <li>Wet-mop today, no incense.</li>
-                  <li>Take the metro at 11:00 to cut PM2.5 by 60%.</li>
-                </ul>
-              </div>
-            </figure>
-          </div>
-        </section>
+
+              <figure className="view-enter rounded-[2rem] bg-snow/[0.06] p-5 shadow-glow ring-1 ring-snow/10 backdrop-blur sm:p-6">
+                <figcaption className="mb-4 flex items-center justify-between text-sm text-ink-300">
+                  <span>Example: a severe smog morning in Delhi</span>
+                  <span className="rounded-full bg-sun px-2 py-0.5 text-xs font-bold text-ink-950">Live demo</span>
+                </figcaption>
+                <NaqiGauge value={418} category="Severe" size="md" />
+                <p className="mb-4 mt-3 text-center font-semibold text-ink-100">Cold, still air is trapping smog near the ground.</p>
+                <div className="rounded-2xl bg-gradient-to-br from-[#991b1b] to-[#881337] p-4 text-snow">
+                  <p className="mb-2 text-lg font-bold">Today: keep Dadi indoors. Go out only 2–4 PM.</p>
+                  <ul className="list-disc space-y-1 pl-5 text-ink-100">
+                    <li>Run the purifier in Dadi&apos;s room, doors closed.</li>
+                    <li>Wet-mop today, no incense.</li>
+                    <li>Take the metro at 11:00 to cut PM2.5 by 60%.</li>
+                  </ul>
+                </div>
+              </figure>
+            </div>
+          </section>
 
         <section aria-labelledby="features-title" className="mx-auto max-w-6xl px-4 py-14">
           <h2 id="features-title" className="mb-8 text-3xl font-extrabold">
@@ -116,8 +132,10 @@ export function LandingPage() {
           </h2>
           <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map(({ Icon, title, text }) => (
-              <li key={title} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <Icon aria-hidden="true" size={28} className="mb-3 text-sky-800" />
+              <li key={title} className="card group p-6 transition hover:-translate-y-1 hover:shadow-lg">
+                <span className="mb-4 grid h-12 w-12 place-items-center rounded-2xl bg-teal-50 text-teal-800 transition group-hover:bg-teal-700 group-hover:text-white">
+                  <Icon aria-hidden="true" size={24} />
+                </span>
                 <h3 className="mb-1 text-lg font-bold">{title}</h3>
                 <p className="text-slate-700">{text}</p>
               </li>
@@ -136,8 +154,8 @@ export function LandingPage() {
             </p>
             <ol className="grid gap-5 md:grid-cols-3">
               {STEPS.map((step, i) => (
-                <li key={step.title} className="rounded-2xl bg-slate-100 p-5">
-                  <p className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-slate-900 text-lg font-bold text-white" aria-hidden="true">
+                <li key={step.title} className="rounded-3xl bg-slate-100 p-6">
+                  <p className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-teal-700 text-lg font-bold text-white" aria-hidden="true">
                     {i + 1}
                   </p>
                   <h3 className="mb-1 text-lg font-bold">{step.title}</h3>
@@ -158,7 +176,7 @@ export function LandingPage() {
               holds just your name and e-mail. The server sees family members only as codes like Member_1.
             </p>
           </div>
-          <div className="flex flex-col justify-center gap-3 rounded-2xl bg-emerald-50 p-6">
+          <div className="flex flex-col justify-center gap-3 rounded-3xl bg-emerald-50 p-6 ring-1 ring-emerald-200">
             <p className="flex items-center gap-2 text-lg font-bold text-emerald-950">
               <Leaf aria-hidden="true" size={22} /> Ready when the smog is.
             </p>

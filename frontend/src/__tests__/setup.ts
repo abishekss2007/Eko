@@ -10,4 +10,5 @@ afterEach(() => {
   cleanup();
   window.localStorage.clear();
   window.history.replaceState({}, "", "/");
+  delete document.documentElement.dataset.theme;
 });

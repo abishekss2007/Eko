@@ -1,15 +1,22 @@
 import { render, screen } from "@testing-library/react";
 import { axe } from "vitest-axe";
-import { NaqiBadge } from "../components/AirDashboard";
+import { NaqiGauge } from "../components/NaqiGauge";
 import { BestWindowChart } from "../components/BestWindowChart";
 import { SosPanel } from "../components/SosPanel";
 import { AIR } from "./fixtures";
 
-describe("NaqiBadge", () => {
-  it("shows value and category as text, not colour alone", () => {
-    render(<NaqiBadge value={418} category="Severe" />);
+describe("NaqiGauge", () => {
+  it("shows value and category as text, not colour alone, with one summary label", async () => {
+    const { container } = render(<NaqiGauge value={418} category="Severe" />);
+    expect(screen.getByRole("img", { name: "NAQI gauge: 418 out of 500, Severe" })).toBeInTheDocument();
     expect(screen.getByText("418")).toBeInTheDocument();
     expect(screen.getByText("Severe")).toBeInTheDocument();
+    expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it("caps the dial at 500", () => {
+    render(<NaqiGauge value={650} category="Severe" size="md" />);
+    expect(screen.getByRole("img", { name: /650 out of 500/ })).toBeInTheDocument();
   });
 });
 

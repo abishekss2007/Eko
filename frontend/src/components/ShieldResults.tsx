@@ -20,7 +20,7 @@ export function ShieldResults({ result, members, notificationPermission, onEnabl
   return (
     <div className="space-y-4">
       {result.risk.should_alert && (
-        <div role="alert" className="rounded-xl border-2 border-red-900 bg-red-900 p-4 text-white">
+        <div role="alert" className="rounded-2xl bg-gradient-to-br from-[#991b1b] to-[#881337] p-4 text-snow shadow-lg shadow-black/20">
           <p className="flex items-center gap-2 text-lg font-bold">
             <BellRing aria-hidden="true" size={22} /> Smog alert for your family
           </p>
