@@ -12,10 +12,12 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
 from app.config import Settings, get_settings
-from app.routers import air, health, shield
+from app.routers import air, health, planner, shield
 from app.security import BodySizeLimitMiddleware, SecurityHeadersMiddleware, limiter
 from app.services.air_service import AirService, UpstreamError
 from app.services.gemini_service import NarrativeModel, build_narrative_model
+from app.services.narrator import Narrator
+from app.services.planner_service import PlannerService
 from app.services.shield_service import ShieldService
 
 logger = logging.getLogger("saanssafe")
@@ -37,9 +39,11 @@ def create_app(
         )
         model = narrative_model or build_narrative_model(settings)
         air_service = AirService(client, settings)
+        narrator = Narrator(model, settings)
         app.state.air_service = air_service
-        app.state.shield_service = ShieldService(air_service, model, settings)
-        app.state.shield_service_ai_enabled = model is not None
+        app.state.shield_service = ShieldService(air_service, narrator)
+        app.state.planner_service = PlannerService(air_service, narrator)
+        app.state.ai_enabled = narrator.enabled
         try:
             yield
         finally:
@@ -64,7 +68,7 @@ def create_app(
     app.add_middleware(BodySizeLimitMiddleware, max_bytes=settings.max_body_bytes)
     app.add_middleware(SecurityHeadersMiddleware)
 
-    for module in (health, air, shield):
+    for module in (health, air, shield, planner):
         app.include_router(module.router)
 
     if settings.static_dir and settings.static_dir.is_dir():

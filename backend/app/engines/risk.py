@@ -33,9 +33,7 @@ def assess_member(member: MemberInput, category: str, inversion: bool) -> Member
         steps += 1
         reasons.append("Cold, still air is trapping smog, which strains lungs and heart")
 
-    ceiling: RiskLevel = (
-        "emergency" if medical or not rules.emergency_requires_medical_sensitivity else "very_high"
-    )
+    ceiling: RiskLevel = "emergency" if medical or not rules.emergency_requires_medical_sensitivity else "very_high"
     clean_air = category == get_assumptions().naqi.categories[0].name
     level = base if clean_air else _bump(base, steps, ceiling)
     return MemberRisk(member_id=member.member_id, risk_level=level, reasons=reasons)

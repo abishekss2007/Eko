@@ -1,10 +1,12 @@
 import { Square, Volume2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useLanguage } from "../lib/language";
 import { canSpeak, speak, stopSpeaking } from "../lib/speech";
 
 /** Read text aloud for older or low-literacy family members. Hidden if unsupported. */
 export function ReadAloudButton({ text, label = "Read aloud" }: { text: string; label?: string }) {
   const [speaking, setSpeaking] = useState(false);
+  const { speechLang } = useLanguage();
   useEffect(() => () => stopSpeaking(), []);
   if (!canSpeak()) return null;
 
@@ -14,7 +16,7 @@ export function ReadAloudButton({ text, label = "Read aloud" }: { text: string; 
       setSpeaking(false);
     } else {
       setSpeaking(true);
-      speak(text, "en-IN", () => setSpeaking(false));
+      speak(text, speechLang, () => setSpeaking(false));
     }
   };
 

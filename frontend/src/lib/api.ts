@@ -1,4 +1,17 @@
-import type { AirReport, GeocodeResult, ShieldRequest, ShieldResponse } from "../types";
+import type {
+  AirReport,
+  CivicRequest,
+  CivicResponse,
+  CommuteRequest,
+  CommuteResponse,
+  GeocodeResult,
+  IndoorRequest,
+  IndoorResponse,
+  PlanRequest,
+  PlanResponse,
+  ShieldRequest,
+  ShieldResponse,
+} from "../types";
 
 export class ApiError extends Error {
   constructor(
@@ -36,6 +49,12 @@ export function searchPlaces(query: string, signal?: AbortSignal): Promise<Geoco
   return request<GeocodeResult[]>(`/api/geocode?${new URLSearchParams({ q: query })}`, { signal });
 }
 
-export function fetchShield(body: ShieldRequest, signal?: AbortSignal): Promise<ShieldResponse> {
-  return request<ShieldResponse>("/api/shield", { method: "POST", body: JSON.stringify(body), signal });
+function post<T>(path: string, body: unknown, signal?: AbortSignal): Promise<T> {
+  return request<T>(path, { method: "POST", body: JSON.stringify(body), signal });
 }
+
+export const fetchShield = (body: ShieldRequest, signal?: AbortSignal) => post<ShieldResponse>("/api/shield", body, signal);
+export const fetchPlan = (body: PlanRequest, signal?: AbortSignal) => post<PlanResponse>("/api/plan", body, signal);
+export const fetchIndoor = (body: IndoorRequest) => post<IndoorResponse>("/api/indoor", body);
+export const fetchCommute = (body: CommuteRequest) => post<CommuteResponse>("/api/commute", body);
+export const fetchCivic = (body: CivicRequest) => post<CivicResponse>("/api/civic", body);

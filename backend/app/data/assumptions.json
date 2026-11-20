@@ -5,19 +5,155 @@
     "averaging_note": "CPCB defines PM2.5, PM10 and NO2 sub-indices on 24-hour averages. The engine averages the trailing 24 hourly readings when at least 16 are available (the CPCB minimum) and otherwise falls back to the latest hourly value, flagging the result as indicative.",
     "min_hours_for_24h_average": 16,
     "categories": [
-      {"name": "Good", "aqi_low": 0, "aqi_high": 50, "color": "#00b050", "health_impact": "Minimal impact."},
-      {"name": "Satisfactory", "aqi_low": 51, "aqi_high": 100, "color": "#92d050", "health_impact": "May cause minor breathing discomfort to sensitive people."},
-      {"name": "Moderate", "aqi_low": 101, "aqi_high": 200, "color": "#ffff00", "health_impact": "May cause breathing discomfort to people with lung disease such as asthma, and discomfort to people with heart disease, children and older adults."},
-      {"name": "Poor", "aqi_low": 201, "aqi_high": 300, "color": "#ff9900", "health_impact": "May cause breathing discomfort to people on prolonged exposure, and discomfort to people with heart disease."},
-      {"name": "Very Poor", "aqi_low": 301, "aqi_high": 400, "color": "#ff0000", "health_impact": "May cause respiratory illness to people on prolonged exposure. Effect may be more pronounced in people with lung and heart diseases."},
-      {"name": "Severe", "aqi_low": 401, "aqi_high": 500, "color": "#c00000", "health_impact": "May cause respiratory effects even on healthy people, and serious health impacts on people with lung or heart disease."}
+      {
+        "name": "Good",
+        "aqi_low": 0,
+        "aqi_high": 50,
+        "color": "#00b050",
+        "health_impact": "Minimal impact."
+      },
+      {
+        "name": "Satisfactory",
+        "aqi_low": 51,
+        "aqi_high": 100,
+        "color": "#92d050",
+        "health_impact": "May cause minor breathing discomfort to sensitive people."
+      },
+      {
+        "name": "Moderate",
+        "aqi_low": 101,
+        "aqi_high": 200,
+        "color": "#ffff00",
+        "health_impact": "May cause breathing discomfort to people with lung disease such as asthma, and discomfort to people with heart disease, children and older adults."
+      },
+      {
+        "name": "Poor",
+        "aqi_low": 201,
+        "aqi_high": 300,
+        "color": "#ff9900",
+        "health_impact": "May cause breathing discomfort to people on prolonged exposure, and discomfort to people with heart disease."
+      },
+      {
+        "name": "Very Poor",
+        "aqi_low": 301,
+        "aqi_high": 400,
+        "color": "#ff0000",
+        "health_impact": "May cause respiratory illness to people on prolonged exposure. Effect may be more pronounced in people with lung and heart diseases."
+      },
+      {
+        "name": "Severe",
+        "aqi_low": 401,
+        "aqi_high": 500,
+        "color": "#c00000",
+        "health_impact": "May cause respiratory effects even on healthy people, and serious health impacts on people with lung or heart disease."
+      }
     ],
     "breakpoints_ug_m3": {
-      "pm2_5": [[0, 30], [30, 60], [60, 90], [90, 120], [120, 250], [250, 380]],
-      "pm10": [[0, 50], [50, 100], [100, 250], [250, 350], [350, 430], [430, 510]],
-      "no2": [[0, 40], [40, 80], [80, 180], [180, 280], [280, 400], [400, 520]]
+      "pm2_5": [
+        [
+          0,
+          30
+        ],
+        [
+          30,
+          60
+        ],
+        [
+          60,
+          90
+        ],
+        [
+          90,
+          120
+        ],
+        [
+          120,
+          250
+        ],
+        [
+          250,
+          380
+        ]
+      ],
+      "pm10": [
+        [
+          0,
+          50
+        ],
+        [
+          50,
+          100
+        ],
+        [
+          100,
+          250
+        ],
+        [
+          250,
+          350
+        ],
+        [
+          350,
+          430
+        ],
+        [
+          430,
+          510
+        ]
+      ],
+      "no2": [
+        [
+          0,
+          40
+        ],
+        [
+          40,
+          80
+        ],
+        [
+          80,
+          180
+        ],
+        [
+          180,
+          280
+        ],
+        [
+          280,
+          400
+        ],
+        [
+          400,
+          520
+        ]
+      ]
     },
-    "index_bands": [[0, 50], [50, 100], [100, 200], [200, 300], [300, 400], [400, 500]]
+    "index_bands": [
+      [
+        0,
+        50
+      ],
+      [
+        50,
+        100
+      ],
+      [
+        100,
+        200
+      ],
+      [
+        200,
+        300
+      ],
+      [
+        300,
+        400
+      ],
+      [
+        400,
+        500
+      ]
+    ]
   },
   "inversion": {
     "source": "App heuristic for winter smog trapping. 90 ug/m3 PM2.5 is the lower bound of the CPCB 'Poor' band. Wind below 8 km/h (about 2.2 m/s) and cold surface air below 15 C indicate poor vertical mixing and low ventilation, the conditions IITM-Pune and CPCB describe for Delhi-NCR winter smog episodes.",
@@ -34,7 +170,13 @@
   },
   "risk": {
     "source": "Tier mapping derived from the CPCB NAQI health statements above: sensitive groups (children, older adults, people with lung or heart disease) are affected one band earlier than the general public. MoHFW NPCCHH air pollution health advisories list the same vulnerable groups.",
-    "levels": ["low", "moderate", "high", "very_high", "emergency"],
+    "levels": [
+      "low",
+      "moderate",
+      "high",
+      "very_high",
+      "emergency"
+    ],
     "general_public_by_category": {
       "Good": "low",
       "Satisfactory": "low",
@@ -43,9 +185,23 @@
       "Very Poor": "very_high",
       "Severe": "very_high"
     },
-    "vulnerable_age_groups": ["infant", "child", "senior"],
-    "medical_sensitivities": ["asthma", "copd", "heart_disease", "pregnancy", "diabetes"],
-    "inversion_sensitive_conditions": ["asthma", "copd", "heart_disease"],
+    "vulnerable_age_groups": [
+      "infant",
+      "child",
+      "senior"
+    ],
+    "medical_sensitivities": [
+      "asthma",
+      "copd",
+      "heart_disease",
+      "pregnancy",
+      "diabetes"
+    ],
+    "inversion_sensitive_conditions": [
+      "asthma",
+      "copd",
+      "heart_disease"
+    ],
     "emergency_requires_medical_sensitivity": true,
     "alert_threshold": "high"
   },
@@ -59,10 +215,21 @@
       "Wheezing or coughing that does not settle with the usual prescribed reliever"
     ],
     "by_condition": {
-      "heart_disease": ["Chest pain spreading to the arm, jaw or back", "Sudden irregular or racing heartbeat"],
-      "pregnancy": ["Dizziness or fainting during pregnancy", "Noticeably reduced baby movements"],
-      "infant": ["Very fast breathing, or the skin between the ribs pulling in", "Not feeding, or unusually floppy or hard to wake"],
-      "diabetes": ["Very high or very low sugar readings with breathlessness or confusion"]
+      "heart_disease": [
+        "Chest pain spreading to the arm, jaw or back",
+        "Sudden irregular or racing heartbeat"
+      ],
+      "pregnancy": [
+        "Dizziness or fainting during pregnancy",
+        "Noticeably reduced baby movements"
+      ],
+      "infant": [
+        "Very fast breathing, or the skin between the ribs pulling in",
+        "Not feeding, or unusually floppy or hard to wake"
+      ],
+      "diabetes": [
+        "Very high or very low sugar readings with breathlessness or confusion"
+      ]
     }
   },
   "emergency_numbers": {
@@ -79,5 +246,171 @@
     "relative_humidity": 88,
     "wind_kmh": 3,
     "afternoon_clean_pm2_5": 138
+  },
+  "indoor": {
+    "source": "Clean-air delivery target of 5 air changes per hour (ACH) for an occupied room, in line with the Lancet COVID-19 Commission (2022) 'excellent' tier and US EPA guidance on portable air cleaners. Required CADR = room volume x target ACH.",
+    "target_ach": 5,
+    "filter_replace_months": 6,
+    "filter_source": "Most HEPA purifier makers in India advise replacing the filter every 6 months in high-pollution cities; a clogged filter delivers well below its rated CADR.",
+    "fixes": [
+      {
+        "id": "close_peak",
+        "title": "Keep windows shut during smoggy hours and air the home only in the cleanest window",
+        "cost_tier": "zero_rupee",
+        "impact": "high",
+        "when": "always"
+      },
+      {
+        "id": "wet_mop",
+        "title": "Switch from dry sweeping to wet mopping",
+        "cost_tier": "zero_rupee",
+        "impact": "medium",
+        "when": "dry_sweeping"
+      },
+      {
+        "id": "no_incense",
+        "title": "Stop burning incense, dhoop or mosquito coils indoors",
+        "cost_tier": "zero_rupee",
+        "impact": "high",
+        "when": "incense"
+      },
+      {
+        "id": "solid_fuel_ventilate",
+        "title": "Cook with the door open and keep children and elders away from the stove smoke",
+        "cost_tier": "zero_rupee",
+        "impact": "high",
+        "when": "solid_fuel"
+      },
+      {
+        "id": "lid_and_exhaust",
+        "title": "Cook with lids on and run the kitchen exhaust or open the kitchen window while cooking",
+        "cost_tier": "zero_rupee",
+        "impact": "medium",
+        "when": "lpg"
+      },
+      {
+        "id": "seal_gaps",
+        "title": "Seal door and window gaps with draught strips or rolled towels",
+        "cost_tier": "under_1000",
+        "impact": "medium",
+        "when": "always"
+      },
+      {
+        "id": "replace_filter",
+        "title": "Replace the purifier's old filter",
+        "cost_tier": "under_5000",
+        "impact": "high",
+        "when": "old_filter"
+      },
+      {
+        "id": "corsi_box",
+        "title": "Build a DIY box-fan filter (a box fan with MERV-13 filters taped around it, known as a Corsi-Rosenthal box)",
+        "cost_tier": "under_5000",
+        "impact": "high",
+        "when": "cadr_gap"
+      },
+      {
+        "id": "switch_fuel",
+        "title": "Move from wood, dung or coal to LPG or induction (check PM Ujjwala Yojana eligibility)",
+        "cost_tier": "under_5000",
+        "impact": "high",
+        "when": "solid_fuel"
+      }
+    ],
+    "corsi_source": "Corsi-Rosenthal box: box fan + four MERV-13 filters; peer-reviewed tests (e.g. Dal Porto et al. 2022, Indoor Air) show clean-air delivery comparable to commercial purifiers at lower cost."
+  },
+  "commute": {
+    "source": "Inhaled dose = ambient PM2.5 x microenvironment factor x breathing rate x hours. CO2 = distance x per-passenger emission factor.",
+    "breathing_rate_source": "US EPA Exposure Factors Handbook (2011), Table 6-2, adult mean ventilation: light activity 0.72 m3/h, moderate 1.56 m3/h.",
+    "microenvironment_source": "Approximate in-transit / ambient PM2.5 ratios informed by Goel et al. (2015), 'On-road PM2.5 pollution exposure in multiple transport microenvironments in Delhi', Atmospheric Environment 123:129-138. Treat as indicative.",
+    "emission_source": "Per-passenger-km factors approximated from the India GHG Program (WRI India, CII, TERI) 'India Specific Road Transport Emission Factors' (2015), with assumed occupancy (auto 2, carpool 3, bus 40) and a Delhi Metro estimate. Treat as indicative.",
+    "speed_source": "Typical Delhi door-to-door speeds assumed by this app, used only when the trip duration is not entered.",
+    "modes": {
+      "car_petrol_solo": {
+        "label": "Petrol car (alone)",
+        "speed_kmh": 22,
+        "breathing_m3h": 0.72,
+        "micro_factor": 0.9,
+        "co2_kg_per_km": 0.13,
+        "low_emission": false
+      },
+      "two_wheeler": {
+        "label": "Two-wheeler",
+        "speed_kmh": 25,
+        "breathing_m3h": 0.72,
+        "micro_factor": 1.5,
+        "co2_kg_per_km": 0.035,
+        "low_emission": false
+      },
+      "auto_rickshaw": {
+        "label": "Auto-rickshaw (CNG)",
+        "speed_kmh": 20,
+        "breathing_m3h": 0.72,
+        "micro_factor": 1.5,
+        "co2_kg_per_km": 0.05,
+        "low_emission": true
+      },
+      "bus": {
+        "label": "Bus",
+        "speed_kmh": 15,
+        "breathing_m3h": 0.72,
+        "micro_factor": 1.3,
+        "co2_kg_per_km": 0.015,
+        "low_emission": true
+      },
+      "metro": {
+        "label": "Metro",
+        "speed_kmh": 30,
+        "breathing_m3h": 0.72,
+        "micro_factor": 0.6,
+        "co2_kg_per_km": 0.03,
+        "low_emission": true
+      },
+      "carpool": {
+        "label": "Carpool (3 people)",
+        "speed_kmh": 22,
+        "breathing_m3h": 0.72,
+        "micro_factor": 0.9,
+        "co2_kg_per_km": 0.043,
+        "low_emission": true
+      },
+      "walk": {
+        "label": "Walk",
+        "speed_kmh": 5,
+        "breathing_m3h": 1.56,
+        "micro_factor": 1.2,
+        "co2_kg_per_km": 0.0,
+        "low_emission": true
+      },
+      "cycle": {
+        "label": "Cycle",
+        "speed_kmh": 13,
+        "breathing_m3h": 1.56,
+        "micro_factor": 1.2,
+        "co2_kg_per_km": 0.0,
+        "low_emission": true
+      }
+    },
+    "max_active_km": {
+      "walk": 3,
+      "cycle": 10
+    },
+    "max_shift_hours": 2
+  },
+  "daily_plan": {
+    "source": "Decision rules applied to the CPCB NAQI band: 'stay_in' from Very Poor upward or during a smog trap, 'limit' for Poor and Moderate, otherwise 'normal'. Purifier and mask advice from Poor upward.",
+    "stay_in_categories": [
+      "Very Poor",
+      "Severe"
+    ],
+    "limit_categories": [
+      "Moderate",
+      "Poor"
+    ],
+    "purifier_categories": [
+      "Poor",
+      "Very Poor",
+      "Severe"
+    ]
   }
 }

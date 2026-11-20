@@ -187,9 +187,7 @@ class AirService:
         hit = self._geo_cache.get(key)
         if hit is not None:
             return hit
-        data = await self._get_json(
-            GEOCODE_URL, {"name": query, "count": 5, "language": "en", "format": "json"}
-        )
+        data = await self._get_json(GEOCODE_URL, {"name": query, "count": 5, "language": "en", "format": "json"})
         results = [
             GeocodeResult.model_validate(item)
             for item in data.get("results") or []

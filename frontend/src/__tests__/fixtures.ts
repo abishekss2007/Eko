@@ -1,4 +1,4 @@
-import type { AirReport, ShieldResponse } from "../types";
+import type { AirReport, CivicResponse, CommuteResponse, IndoorResponse, PlanResponse, ShieldResponse } from "../types";
 
 export const AIR: AirReport = {
   location: { latitude: 28.61, longitude: 77.21, timezone: "Asia/Kolkata" },
@@ -70,11 +70,99 @@ export const SHIELD: ShieldResponse = {
   disclaimer: "Not medical advice.",
 };
 
-/** A fetch stub that answers the three API routes. */
+export const PLAN: PlanResponse = {
+  air: AIR,
+  plan: {
+    stance: "stay_in",
+    go_out_start: "14:00",
+    go_out_end: "16:00",
+    stay_indoors: ["Member_1"],
+    use_purifier: true,
+    actions: [{ id: "go_out", text: "Go out only between 14:00 and 16:00." }],
+  },
+  narrative: {
+    headline: "Severe smog today (NAQI 418): stay indoors, especially Member_1.",
+    steps: ["Go out only between 14:00 and 16:00, when PM2.5 averages 140 ug/m3.", "Keep Member_1 indoors today."],
+  },
+  narrative_source: "rules",
+};
+
+export const INDOOR: IndoorResponse = {
+  air: AIR,
+  assessment: {
+    room_volume_m3: 42,
+    target_ach: 5,
+    required_cadr_m3h: 210,
+    current_cadr_m3h: 0,
+    effective_ach: 0,
+    cadr_gap_m3h: 210,
+    filter_overdue: false,
+    pollution_sources: ["Dry sweeping stirring up dust"],
+    fixes: [
+      { id: "close_peak", title: "Keep windows shut", cost_tier: "zero_rupee", impact: "high", reason: "Smog leaks in." },
+      { id: "wet_mop", title: "Switch to wet mopping", cost_tier: "zero_rupee", impact: "medium", reason: "Dust." },
+    ],
+  },
+  narrative: {
+    summary: "This 42 m3 room needs a purifier delivering about 210 m3/h of clean air.",
+    impact_reasoning: "Fine particles seep indoors.",
+    explanations: ["Smog leaks in through open windows.", "Dry sweeping throws dust back up."],
+  },
+  narrative_source: "rules",
+};
+
+const option = (mode: "car_petrol_solo" | "metro", label: string, departure: string, dose: number, co2: number) => ({
+  mode,
+  label,
+  departure,
+  duration_min: 30,
+  ambient_pm2_5: 250,
+  inhaled_dose_ug: dose,
+  co2_kg: co2,
+});
+
+export const COMMUTE: CommuteResponse = {
+  air: AIR,
+  plan: {
+    baseline: option("car_petrol_solo", "Petrol car (alone)", "09:00", 93.4, 1.56),
+    recommended: option("metro", "Metro", "11:00", 37.5, 0.36),
+    options: [option("metro", "Metro", "09:00", 45, 0.36), option("car_petrol_solo", "Petrol car (alone)", "09:00", 93.4, 1.56)],
+    dose_saved_ug: 55.9,
+    dose_saved_pct: 60,
+    co2_saved_kg: 1.2,
+    shifted: true,
+    factors: {
+      formula_dose: "inhaled_dose_ug = PM2.5 x factor x breathing x hours",
+      formula_co2: "co2_kg = distance_km x emission_factor",
+      sources: ["US EPA Exposure Factors Handbook (2011)"],
+      modes: { metro: { label: "Metro", speed_kmh: 30, breathing_m3h: 0.72, micro_factor: 0.6, co2_kg_per_km: 0.03 } },
+    },
+  },
+  narrative: { summary: "Switching to metro at 11:00 cuts inhaled PM2.5 by 60%.", impact_reasoning: "Less smog reaches you.", explanations: [] },
+  narrative_source: "rules",
+};
+
+export const CIVIC: CivicResponse = {
+  air: AIR,
+  draft: { subject: "Request for clean-air measures (NAQI 418)", body: "Dear RWA Committee,\n\nPlease stop open burning." },
+  narrative_source: "rules",
+};
+
+const ROUTES: [string, unknown][] = [
+  ["/api/shield", SHIELD],
+  ["/api/plan", PLAN],
+  ["/api/indoor", INDOOR],
+  ["/api/commute", COMMUTE],
+  ["/api/civic", CIVIC],
+  ["/api/geocode", []],
+  ["/api/air", AIR],
+];
+
+/** A fetch stub that answers every API route with a fixture. */
 export function stubFetch(): ReturnType<typeof vi.fn> {
   const fn = vi.fn(async (input: RequestInfo | URL) => {
     const url = String(input);
-    const body = url.startsWith("/api/shield") ? SHIELD : url.startsWith("/api/geocode") ? [] : AIR;
+    const body = ROUTES.find(([prefix]) => url.startsWith(prefix))?.[1] ?? AIR;
     return new Response(JSON.stringify(body), { status: 200, headers: { "Content-Type": "application/json" } });
   });
   vi.stubGlobal("fetch", fn);

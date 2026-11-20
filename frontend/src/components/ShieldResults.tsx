@@ -1,4 +1,5 @@
 import { BellRing, CheckCircle2, HeartPulse, Sparkles } from "lucide-react";
+import { pretty } from "../lib/format";
 import { untokenize, type Member } from "../lib/household";
 import { RISK_CLASSES, RISK_LABELS, isAlertLevel } from "../lib/naqi";
 import type { ShieldResponse } from "../types";
@@ -12,7 +13,7 @@ interface Props {
 }
 
 export function ShieldResults({ result, members, notificationPermission, onEnableNotifications }: Props) {
-  const name = (text: string) => untokenize(text, members);
+  const name = (text: string) => pretty(untokenize(text, members));
   const textById = new Map(result.narrative.member_alerts.map((a) => [a.member_id, a]));
   const atRisk = result.risk.members.filter((m) => isAlertLevel(m.risk_level));
 

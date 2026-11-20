@@ -75,9 +75,7 @@ class FakeModel:
 
     model_name = "fake-model"
 
-    def __init__(
-        self, reply: Callable[[str], BaseModel] | None = None, error: Exception | None = None
-    ) -> None:
+    def __init__(self, reply: Callable[[str], BaseModel] | None = None, error: Exception | None = None) -> None:
         self.reply = reply
         self.error = error
         self.prompts: list[tuple[str, str]] = []

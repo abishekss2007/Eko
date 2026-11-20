@@ -1,11 +1,8 @@
 """Family Health Shield: deterministic risk + Gemini explanation with a verified fallback."""
 
-import asyncio
-import hashlib
-import logging
+from collections.abc import Callable
 from typing import Any
 
-from app.config import Settings
 from app.data import get_assumptions
 from app.engines.risk import assess_household
 from app.prompts.health_shield import build_health_shield_prompts
@@ -19,11 +16,7 @@ from app.schemas.shield import (
     ShieldResponse,
 )
 from app.services.air_service import AirService
-from app.services.cache import TTLCache
-from app.services.gemini_service import NarrativeModel
-from app.services.grounding import allowed_numbers, mentions_dosing, ungrounded_numbers
-
-logger = logging.getLogger(__name__)
+from app.services.narrator import Narrator
 
 DISCLAIMER = (
     "SaansSafe gives general air-quality guidance, not medical advice. It does not diagnose or "
@@ -50,7 +43,7 @@ def fmt(value: float | None) -> str:
     """One shared number format, so text and verified data always agree."""
     if value is None:
         return "unknown"
-    return str(int(value)) if float(value).is_integer() else f"{value:.1f}"
+    return f"{value:.2f}".rstrip("0").rstrip(".")
 
 
 def verified_payload(air: AirReport, risk: HouseholdRisk, members: list[MemberInput]) -> dict[str, Any]:
@@ -145,8 +138,7 @@ def rules_narrative(air: AirReport, risk: HouseholdRisk, members: list[MemberInp
             ]
         )
         reminder = (
-            f'Follow your doctor\'s existing advice: "{member.care_note}". Keep prescribed '
-            "supplies within reach."
+            f'Follow your doctor\'s existing advice: "{member.care_note}". Keep prescribed supplies within reach.'
             if member.care_note
             else "Keep any prescribed medicines and devices within reach and follow your doctor's plan."
         )
@@ -172,10 +164,7 @@ def rules_narrative(air: AirReport, risk: HouseholdRisk, members: list[MemberInp
             )
         )
     levels = get_assumptions().risk.levels
-    ordered = [
-        by_id[r.member_id]
-        for r in sorted(risk.members, key=lambda r: levels.index(r.risk_level), reverse=True)
-    ]
+    ordered = [by_id[r.member_id] for r in sorted(risk.members, key=lambda r: levels.index(r.risk_level), reverse=True)]
     handoff = (
         f"I am calling about {', '.join(_describe(m) for m in ordered)}. "
         f"Outdoor air here is NAQI {air.naqi.value} ({air.naqi.category}), PM2.5 {fmt(c.pm2_5)} ug/m3, "
@@ -184,14 +173,6 @@ def rules_narrative(air: AirReport, risk: HouseholdRisk, members: list[MemberInp
         + "Please tell us what to do right now while we keep them indoors."
     )
     return ShieldNarrative(climate_smog_summary=summary, member_alerts=alerts, doctor_handoff_summary=handoff)
-
-
-def _texts(n: ShieldNarrative) -> list[str]:
-    texts = [n.climate_smog_summary, n.doctor_handoff_summary]
-    for a in n.member_alerts:
-        texts += [a.impact_reasoning, a.notification_title, a.notification_body, a.care_plan_reminder]
-        texts += a.stay_safe_steps
-    return texts
 
 
 def _clamp(n: ShieldNarrative) -> ShieldNarrative:
@@ -203,62 +184,37 @@ def _clamp(n: ShieldNarrative) -> ShieldNarrative:
     return n
 
 
-def validate_narrative(
-    narrative: ShieldNarrative, verified: dict[str, Any], member_ids: list[str]
-) -> str | None:
-    """Return a reason to reject the model output, or None if it is safe to show."""
-    if sorted(a.member_id for a in narrative.member_alerts) != sorted(member_ids):
-        return "member_ids do not match"
-    if any(not a.stay_safe_steps for a in narrative.member_alerts):
-        return "missing stay-safe steps"
-    texts = _texts(narrative)
-    bad = ungrounded_numbers(texts, allowed_numbers(verified))
-    if bad:
-        return f"ungrounded numbers {bad[:5]}"
-    if mentions_dosing(texts):
-        return "dosing language"
-    return None
+def member_check(member_ids: list[str]) -> Callable[[ShieldNarrative], str | None]:
+    """Shield-specific check: exactly one alert per member, each with steps."""
+
+    def check(narrative: ShieldNarrative) -> str | None:
+        if sorted(a.member_id for a in narrative.member_alerts) != sorted(member_ids):
+            return "member_ids do not match"
+        if any(not a.stay_safe_steps for a in narrative.member_alerts):
+            return "missing stay-safe steps"
+        return None
+
+    return check
 
 
 class ShieldService:
-    def __init__(self, air: AirService, model: NarrativeModel | None, settings: Settings) -> None:
+    def __init__(self, air: AirService, narrator: Narrator) -> None:
         self._air = air
-        self._model = model
-        self._timeout = settings.gemini_timeout_s
-        self._cache: TTLCache[str, ShieldNarrative] = TTLCache(settings.ai_cache_ttl_s)
-
-    async def _explain(self, verified: dict[str, Any], request: ShieldRequest) -> ShieldNarrative | None:
-        if self._model is None:
-            return None
-        notes = [{"member_id": m.member_id, "care_note": m.care_note} for m in request.members if m.care_note]
-        system, prompt = build_health_shield_prompts(verified, notes, request.language)
-        key = hashlib.sha256(f"{self._model.model_name}\0{system}\0{prompt}".encode()).hexdigest()
-        if (hit := self._cache.get(key)) is not None:
-            return hit
-        try:
-            narrative = await asyncio.wait_for(
-                self._model.generate(system, prompt, ShieldNarrative), self._timeout
-            )
-        except Exception as exc:  # noqa: BLE001 - timeouts, SDK, network or schema errors
-            logger.warning("Gemini fallback: %s", type(exc).__name__)
-            return None
-        reason = validate_narrative(narrative, verified, [m.member_id for m in request.members])
-        if reason:
-            logger.warning("Gemini output rejected: %s", reason)
-            return None
-        narrative = _clamp(narrative)
-        self._cache.set(key, narrative)
-        return narrative
+        self._narrator = narrator
 
     async def assess(self, request: ShieldRequest) -> ShieldResponse:
         air = await self._air.report(request.latitude, request.longitude, simulate=request.simulate)
         risk = assess_household(request.members, air.naqi.category, air.inversion.detected)
         verified = verified_payload(air, risk, request.members)
-        narrative = await self._explain(verified, request)
+        notes = [{"member_id": m.member_id, "care_note": m.care_note} for m in request.members if m.care_note]
+        system, prompt = build_health_shield_prompts(verified, notes, request.language)
+        narrative = await self._narrator.explain(
+            ShieldNarrative, system, prompt, verified, member_check([m.member_id for m in request.members])
+        )
         return ShieldResponse(
             air=air,
             risk=risk,
-            narrative=narrative or rules_narrative(air, risk, request.members),
+            narrative=_clamp(narrative) if narrative else rules_narrative(air, risk, request.members),
             narrative_source="gemini" if narrative else "rules",
             emergency_numbers=emergency_numbers(),
             disclaimer=DISCLAIMER,

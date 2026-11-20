@@ -51,12 +51,7 @@ def allowed_numbers(verified: Any) -> set[float]:
 
 def ungrounded_numbers(texts: Iterable[str], allowed: set[float]) -> list[float]:
     """Numbers in `texts` that do not match an allowed value within rounding tolerance."""
-    return [
-        n
-        for text in texts
-        for n in extract_numbers(text)
-        if not any(abs(n - a) <= TOLERANCE for a in allowed)
-    ]
+    return [n for text in texts for n in extract_numbers(text) if not any(abs(n - a) <= TOLERANCE for a in allowed)]
 
 
 def mentions_dosing(texts: Iterable[str]) -> bool:

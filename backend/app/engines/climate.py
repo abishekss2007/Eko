@@ -4,9 +4,7 @@ from app.data import get_assumptions
 from app.schemas.air import InversionCheck, InversionResult
 
 
-def detect_inversion(
-    temperature_c: float | None, wind_kmh: float | None, pm2_5: float | None
-) -> InversionResult:
+def detect_inversion(temperature_c: float | None, wind_kmh: float | None, pm2_5: float | None) -> InversionResult:
     """All three conditions must hold. Missing readings never count as met."""
     rules = get_assumptions().inversion
     checks = [

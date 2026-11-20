@@ -11,6 +11,10 @@ RiskLevel = Literal["low", "moderate", "high", "very_high", "emergency"]
 AgeGroup = Literal["infant", "child", "adult", "senior"]
 Sensitivity = Literal["asthma", "copd", "heart_disease", "pregnancy", "diabetes"]
 Pollutant = Literal["pm2_5", "pm10", "no2"]
+CostTier = Literal["zero_rupee", "under_1000", "under_5000"]
+Impact = Literal["high", "medium", "low"]
+Mode = Literal["car_petrol_solo", "two_wheeler", "auto_rickshaw", "bus", "metro", "carpool", "walk", "cycle"]
+FixTrigger = Literal["always", "dry_sweeping", "incense", "solid_fuel", "lpg", "old_filter", "cadr_gap"]
 
 _PATH = Path(__file__).with_name("assumptions.json")
 
@@ -84,6 +88,48 @@ class SimulationAssumptions(_Frozen):
     afternoon_clean_pm2_5: float
 
 
+class IndoorFix(_Frozen):
+    id: str
+    title: str
+    cost_tier: CostTier
+    impact: Impact
+    when: FixTrigger
+
+
+class IndoorAssumptions(_Frozen):
+    source: str
+    target_ach: float
+    filter_replace_months: int
+    fixes: tuple[IndoorFix, ...]
+
+
+class ModeFactors(_Frozen):
+    label: str
+    speed_kmh: float
+    breathing_m3h: float
+    micro_factor: float
+    co2_kg_per_km: float
+    low_emission: bool
+
+
+class CommuteAssumptions(_Frozen):
+    source: str
+    breathing_rate_source: str
+    microenvironment_source: str
+    emission_source: str
+    speed_source: str
+    modes: dict[Mode, ModeFactors]
+    max_active_km: dict[Mode, float]
+    max_shift_hours: int
+
+
+class DailyPlanAssumptions(_Frozen):
+    source: str
+    stay_in_categories: frozenset[str]
+    limit_categories: frozenset[str]
+    purifier_categories: frozenset[str]
+
+
 class Assumptions(_Frozen):
     naqi: NaqiAssumptions
     inversion: InversionAssumptions
@@ -92,6 +138,9 @@ class Assumptions(_Frozen):
     red_flags: RedFlagAssumptions
     emergency_numbers: EmergencyNumbers
     simulation: SimulationAssumptions
+    indoor: IndoorAssumptions
+    commute: CommuteAssumptions
+    daily_plan: DailyPlanAssumptions
 
 
 @lru_cache
