@@ -69,12 +69,30 @@ export interface MemberPayload {
   care_note: string;
 }
 
-export interface ShieldRequest {
+export interface DemoShieldRequest {
   latitude: number;
   longitude: number;
   simulate: boolean;
   language: "en" | "hi" | "ta" | "bn" | "mr";
+}
+
+export interface ShieldRequest extends DemoShieldRequest {
   members: MemberPayload[];
+}
+
+/** A family as the server stores it for a signed-in account. */
+export interface FamilyMemberDto {
+  id: string;
+  name: string;
+  age_group: AgeGroup;
+  sensitivities: Sensitivity[];
+  care_note: string;
+}
+
+export interface HouseholdDto {
+  members: FamilyMemberDto[];
+  doctor_phone: string;
+  hospital_phone: string;
 }
 
 export interface MemberRisk {

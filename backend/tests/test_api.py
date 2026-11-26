@@ -122,7 +122,7 @@ async def test_geocode_and_validation() -> None:
 
 
 async def test_shield_falls_back_to_rules_without_key() -> None:
-    async with api_client() as client:
+    async with api_client(signed_in=True) as client:
         response = await client.post("/api/shield", json=SHIELD_BODY)
     assert response.status_code == 200
     data = response.json()
@@ -137,7 +137,7 @@ async def test_shield_falls_back_to_rules_without_key() -> None:
 
 async def test_shield_uses_grounded_gemini_output_and_never_sends_pii() -> None:
     model = FakeModel(reply=grounded_reply)
-    async with api_client(model=model) as client:
+    async with api_client(signed_in=True, model=model) as client:
         response = await client.post("/api/shield", json=SHIELD_BODY)
         again = await client.post("/api/shield", json=SHIELD_BODY)
     data = response.json()
@@ -157,7 +157,7 @@ async def test_shield_rejects_hallucinated_numbers() -> None:
         reply.climate_smog_summary = "AQI is 350 and it is 4 C."
         return reply
 
-    async with api_client(model=FakeModel(reply=bad)) as client:
+    async with api_client(signed_in=True, model=FakeModel(reply=bad)) as client:
         data = (await client.post("/api/shield", json=SHIELD_BODY)).json()
     assert data["narrative_source"] == "rules"
 
@@ -174,13 +174,13 @@ async def test_shield_rejects_dosing_and_missing_members() -> None:
         return reply
 
     for reply in (dosing, missing):
-        async with api_client(model=FakeModel(reply=reply)) as client:
+        async with api_client(signed_in=True, model=FakeModel(reply=reply)) as client:
             data = (await client.post("/api/shield", json=SHIELD_BODY)).json()
         assert data["narrative_source"] == "rules"
 
 
 async def test_shield_falls_back_on_model_error() -> None:
-    async with api_client(model=FakeModel(error=TimeoutError())) as client:
+    async with api_client(signed_in=True, model=FakeModel(error=TimeoutError())) as client:
         data = (await client.post("/api/shield", json=SHIELD_BODY)).json()
     assert data["narrative_source"] == "rules"
 
@@ -201,7 +201,7 @@ async def test_shield_falls_back_on_model_error() -> None:
 async def test_shield_validation(mutate: Any) -> None:
     body = json.loads(json.dumps(SHIELD_BODY))
     mutate(body)
-    async with api_client() as client:
+    async with api_client(signed_in=True) as client:
         response = await client.post("/api/shield", json=body)
     assert response.status_code == 422
 
@@ -215,7 +215,7 @@ async def test_body_size_limit() -> None:
 async def test_rate_limit(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(shield_router, "get_settings", lambda: make_settings(ai_rate_limit="2/minute"))
     limiter.reset()
-    async with api_client() as client:
+    async with api_client(signed_in=True) as client:
         codes = [(await client.post("/api/shield", json=SHIELD_BODY)).status_code for _ in range(3)]
     limiter.reset()
     assert codes == [200, 200, 429]

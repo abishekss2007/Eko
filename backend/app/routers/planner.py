@@ -2,10 +2,11 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from app.config import get_settings
 from app.dependencies import get_planner_service
+from app.routers.auth import OptionalUser
 from app.schemas.planner import (
     CivicRequest,
     CivicResponse,
@@ -29,8 +30,13 @@ def _ai_limit() -> str:
 
 @router.post("/plan", response_model=PlanResponse)
 @limiter.limit(_ai_limit)
-async def todays_plan(request: Request, body: PlanRequest, service: Planner) -> PlanResponse:
-    """One decision for the family today: when to go out, who stays in, which room actions."""
+async def todays_plan(request: Request, body: PlanRequest, user: OptionalUser, service: Planner) -> PlanResponse:
+    """One decision for the family today: when to go out, who stays in, which room actions.
+
+    Guests get the general plan; a plan for specific family members needs an account.
+    """
+    if body.members and user is None:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Log in or sign up to plan for your family members.")
     return await service.plan(body)
 
 

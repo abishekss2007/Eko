@@ -52,3 +52,10 @@ class User(BaseModel):
     id: int
     name: str
     email: str
+
+
+class DemoAccount(BaseModel):
+    """Public credentials of the shared demo account (deliberately not secret)."""
+
+    email: str
+    password: str

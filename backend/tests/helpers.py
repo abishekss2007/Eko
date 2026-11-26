@@ -13,6 +13,7 @@ from app.config import Settings
 from app.main import create_app
 
 IST = 19800
+TEST_ACCOUNT = {"name": "Test Parent", "email": "parent@example.com", "password": "clean-air-2026"}
 
 
 def open_meteo_payloads(
@@ -97,6 +98,7 @@ def make_settings(**overrides: Any) -> Settings:
         "auth_rate_limit": "1000/minute",
         "database_path": Path(":memory:"),
         "cookie_secure": False,
+        "demo_account": False,
         **overrides,
     }
     return Settings(**values)
@@ -108,13 +110,20 @@ async def api_client(
     model: FakeModel | None = None,
     transport: httpx.MockTransport | None = None,
     settings: Settings | None = None,
+    signed_in: bool = False,
 ) -> AsyncIterator[httpx.AsyncClient]:
-    """The real app, wired to a mock upstream and an optional fake model."""
+    """The real app, wired to a mock upstream and an optional fake model.
+
+    `signed_in` creates an account first, for endpoints that guests cannot use.
+    """
     upstream = httpx.AsyncClient(transport=transport or mock_transport(*open_meteo_payloads()))
     app = create_app(settings or make_settings(), http_client=upstream, narrative_model=model)
     async with (
         app.router.lifespan_context(app),
         httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as client,
     ):
+        if signed_in:
+            created = await client.post("/api/auth/signup", json=TEST_ACCOUNT)
+            assert created.status_code == 201, created.text
         yield client
     await upstream.aclose()

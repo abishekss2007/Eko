@@ -15,10 +15,12 @@ from starlette.responses import Response
 from starlette.types import Scope
 
 from app.config import Settings, get_settings
-from app.routers import air, auth, health, planner, shield
+from app.routers import air, auth, family, health, planner, shield
+from app.schemas.auth import DemoAccount
 from app.security import BodySizeLimitMiddleware, SecurityHeadersMiddleware, limiter
 from app.services.air_service import AirService, UpstreamError
 from app.services.auth_service import AuthService
+from app.services.family_service import FamilyService
 from app.services.gemini_service import NarrativeModel, build_narrative_model
 from app.services.narrator import Narrator
 from app.services.planner_service import PlannerService
@@ -68,6 +70,14 @@ def create_app(
         app.state.planner_service = PlannerService(air_service, narrator)
         app.state.ai_enabled = narrator.enabled
         app.state.auth_service = AuthService(settings.database_path, settings.session_days)
+        app.state.family_service = FamilyService(app.state.auth_service)
+        app.state.demo_account = None
+        if settings.demo_account:
+            demo = DemoAccount(
+                email=settings.demo_email.strip().lower(), password=settings.demo_password.get_secret_value()
+            )
+            await app.state.family_service.seed_demo(demo.email, demo.password)
+            app.state.demo_account = demo
         app.state.cookie_secure = settings.cookie_secure
         try:
             yield
@@ -94,7 +104,7 @@ def create_app(
     app.add_middleware(BodySizeLimitMiddleware, max_bytes=settings.max_body_bytes)
     app.add_middleware(SecurityHeadersMiddleware)
 
-    for module in (health, auth, air, shield, planner):
+    for module in (health, auth, air, shield, planner, family):
         app.include_router(module.router)
 
     if settings.static_dir and settings.static_dir.is_dir():

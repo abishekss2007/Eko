@@ -16,7 +16,14 @@ from app.schemas.shield import (
     ShieldResponse,
 )
 from app.services.air_service import AirService
+from app.services.family_service import DEMO_HOUSEHOLD
 from app.services.narrator import Narrator
+
+# The guided demo's sample family, tokenized the same way the app tokenizes a real one.
+DEMO_MEMBERS = [
+    MemberInput(member_id=f"Member_{i}", age_group=m.age_group, sensitivities=m.sensitivities, care_note=m.care_note)
+    for i, m in enumerate(DEMO_HOUSEHOLD.members, start=1)
+]
 
 DISCLAIMER = (
     "SaansSafe gives general air-quality guidance, not medical advice. It does not diagnose or "

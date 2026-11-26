@@ -33,7 +33,7 @@ PLAN: dict[str, Any] = {
 
 
 async def test_plan_rules_fallback() -> None:
-    async with api_client() as client:
+    async with api_client(signed_in=True) as client:
         data = (await client.post("/api/plan", json=PLAN)).json()
     assert data["plan"]["stance"] == "stay_in"
     assert data["plan"]["stay_indoors"] == ["Member_1"]
@@ -42,13 +42,13 @@ async def test_plan_rules_fallback() -> None:
 
 
 async def test_plan_without_members() -> None:
-    async with api_client() as client:
+    async with api_client(signed_in=True) as client:
         data = (await client.post("/api/plan", json={**BASE, "members": []})).json()
     assert data["plan"]["stay_indoors"] == []
 
 
 async def test_indoor_and_commute_rules() -> None:
-    async with api_client() as client:
+    async with api_client(signed_in=True) as client:
         indoor = (await client.post("/api/indoor", json=INDOOR)).json()
         commute = (await client.post("/api/commute", json=COMMUTE)).json()
     assert indoor["assessment"]["required_cadr_m3h"] == 210
@@ -59,7 +59,7 @@ async def test_indoor_and_commute_rules() -> None:
 
 
 async def test_civic_draft_strips_contacts_and_tags() -> None:
-    async with api_client() as client:
+    async with api_client(signed_in=True) as client:
         data = (await client.post("/api/civic", json=CIVIC)).json()
     body = data["draft"]["body"]
     assert "418" in body and "Sector 62" in body
@@ -80,7 +80,7 @@ async def test_civic_draft_strips_contacts_and_tags() -> None:
     ],
 )
 async def test_planner_validation(path: str, body: dict[str, Any]) -> None:
-    async with api_client() as client:
+    async with api_client(signed_in=True) as client:
         assert (await client.post(path, json=body)).status_code == 422
 
 
@@ -93,9 +93,9 @@ async def test_grounded_gemini_outputs_are_used() -> None:
         headline="Severe smog, NAQI 418: keep Member_1 inside.", steps=["Go out 14:00 to 16:00 only."]
     )
     civic_reply = CivicDraft(subject="Burning in Sector 62", body="NAQI is 418. Burning at 7 must stop.")
-    async with api_client(model=_reply(plan_reply)) as client:
+    async with api_client(signed_in=True, model=_reply(plan_reply)) as client:
         assert (await client.post("/api/plan", json=PLAN)).json()["narrative_source"] == "gemini"
-    async with api_client(model=_reply(civic_reply)) as client:
+    async with api_client(signed_in=True, model=_reply(civic_reply)) as client:
         assert (await client.post("/api/civic", json=CIVIC)).json()["narrative_source"] == "gemini"
 
 
@@ -103,18 +103,18 @@ async def test_gemini_rejected_for_invented_numbers_or_wrong_shape() -> None:
     invented = PlanNarrative(headline="AQI 999, keep Member_1 inside.", steps=["Stay in."])
     omits_member = PlanNarrative(headline="Severe smog today.", steps=["Stay in."])
     wrong_count = ActionNarrative(summary="ok", impact_reasoning="ok", explanations=["only one"])
-    async with api_client(model=_reply(invented)) as client:
+    async with api_client(signed_in=True, model=_reply(invented)) as client:
         assert (await client.post("/api/plan", json=PLAN)).json()["narrative_source"] == "rules"
-    async with api_client(model=_reply(omits_member)) as client:
+    async with api_client(signed_in=True, model=_reply(omits_member)) as client:
         assert (await client.post("/api/plan", json=PLAN)).json()["narrative_source"] == "rules"
-    async with api_client(model=_reply(wrong_count)) as client:
+    async with api_client(signed_in=True, model=_reply(wrong_count)) as client:
         assert (await client.post("/api/indoor", json=INDOOR)).json()["narrative_source"] == "rules"
         assert (await client.post("/api/commute", json=COMMUTE)).json()["narrative_source"] == "rules"
 
 
 async def test_untrusted_input_is_delimited_in_prompt() -> None:
     model = FakeModel(error=TimeoutError())
-    async with api_client(model=model) as client:
+    async with api_client(signed_in=True, model=model) as client:
         await client.post("/api/civic", json=CIVIC)
     system, prompt = model.prompts[0]
     inside = prompt.split("<user_input>")[1].split("</user_input>")[0]
