@@ -3,6 +3,7 @@
 from fastapi import Request
 
 from app.services.air_service import AirService
+from app.services.family_service import FamilyService
 from app.services.planner_service import PlannerService
 from app.services.shield_service import ShieldService
 
@@ -19,4 +20,9 @@ def get_shield_service(request: Request) -> ShieldService:
 
 def get_planner_service(request: Request) -> PlannerService:
     service: PlannerService = request.app.state.planner_service
+    return service
+
+
+def get_family_service(request: Request) -> FamilyService:
+    service: FamilyService = request.app.state.family_service
     return service

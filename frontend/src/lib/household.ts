@@ -1,6 +1,6 @@
-import type { AgeGroup, MemberPayload, Sensitivity } from "../types";
+import type { AgeGroup, HouseholdDto, MemberPayload, Sensitivity } from "../types";
 
-/** Stored only in this browser's localStorage. Never sent as-is. */
+/** Saved to the signed-in account. Sent to the Shield and the AI only as Member_N codes. */
 export interface Member {
   id: string;
   name: string;
@@ -109,4 +109,33 @@ export function parseHousehold(raw: unknown): Household {
 export function telHref(phone: string): string | null {
   const digits = phone.replace(/[^\d+]/g, "").replace(/(?!^)\+/g, "");
   return /^\+?\d{3,15}$/.test(digits) ? `tel:${digits}` : null;
+}
+
+/** Server shape ↔ app shape. The server re-validates everything it receives. */
+export function toDto(h: Household): HouseholdDto {
+  return {
+    members: h.members.map((m) => ({
+      id: m.id,
+      name: m.name,
+      age_group: m.ageGroup,
+      sensitivities: m.sensitivities,
+      care_note: m.careNote,
+    })),
+    doctor_phone: h.doctorPhone,
+    hospital_phone: h.hospitalPhone,
+  };
+}
+
+export function fromDto(dto: HouseholdDto): Household {
+  return parseHousehold({
+    members: dto.members.map((m) => ({
+      id: m.id,
+      name: m.name,
+      ageGroup: m.age_group,
+      sensitivities: m.sensitivities,
+      careNote: m.care_note,
+    })),
+    doctorPhone: dto.doctor_phone,
+    hospitalPhone: dto.hospital_phone,
+  });
 }

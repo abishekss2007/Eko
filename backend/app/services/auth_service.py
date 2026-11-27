@@ -29,6 +29,11 @@ CREATE TABLE IF NOT EXISTS sessions (
     expires_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS sessions_expiry ON sessions(expires_at);
+CREATE TABLE IF NOT EXISTS households (
+    user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    data TEXT NOT NULL,
+    updated_at INTEGER NOT NULL
+);
 """
 
 
@@ -58,6 +63,10 @@ class AuthService:
         async with self._lock:
             return await asyncio.to_thread(fn)
 
+    async def transact[T](self, fn: Callable[[sqlite3.Connection], T]) -> T:
+        """Run `fn` against the shared connection, serialized with every other query."""
+        return await self._run(lambda: fn(self._db))
+
     async def signup(self, name: str, email: str, password: str) -> User:
         hashed = await asyncio.to_thread(hash_password, password)
 
@@ -72,6 +81,21 @@ class AuthService:
             return User(id=int(cur.lastrowid or 0), name=name, email=email)
 
         return await self._run(insert)
+
+    async def ensure_user(self, name: str, email: str, password: str) -> User:
+        """Create the account, or reset its name and password if it exists (used for the demo)."""
+        hashed = await asyncio.to_thread(hash_password, password)
+
+        def upsert() -> User:
+            self._db.execute(
+                "INSERT INTO users (name, email, password_hash, created_at) VALUES (?, ?, ?, ?) "
+                "ON CONFLICT(email) DO UPDATE SET name = excluded.name, password_hash = excluded.password_hash",
+                (name, email, hashed, int(time.time())),
+            )
+            row = self._db.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()
+            return User(id=row[0], name=name, email=email)
+
+        return await self._run(upsert)
 
     async def authenticate(self, email: str, password: str) -> User | None:
         row = await self._run(

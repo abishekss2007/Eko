@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "vitest-axe";
 import App from "../App";
@@ -28,30 +28,6 @@ describe("App", () => {
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("simulate=true"), expect.anything()));
   });
 
-  it("runs the Family Health Shield without sending names or phone numbers", async () => {
-    const fetchMock = stubFetch();
-    render(<LanguageProvider><App /></LanguageProvider>);
-    await userEvent.click(screen.getByRole("button", { name: "Family" }));
-    await userEvent.click(screen.getByRole("button", { name: /Add family member/ }));
-    const name = screen.getByLabelText(/Name \(stays on this device\)/);
-    await userEvent.clear(name);
-    await userEvent.type(name, "Asha");
-    await userEvent.type(screen.getByLabelText(/Family doctor phone/), "9876543210");
-
-    const alert = await screen.findByRole("alert", {}, { timeout: 3000 });
-    expect(within(alert).getByText(/Asha: Emergency/)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Call family doctor/ })).toHaveAttribute("href", "tel:9876543210");
-    expect(screen.getByText(/I am calling about Asha/)).toBeInTheDocument();
-
-    const shieldCalls = fetchMock.mock.calls.filter(([url]) => String(url) === "/api/shield");
-    expect(shieldCalls.length).toBeGreaterThan(0);
-    for (const [, init] of shieldCalls) {
-      const body = String((init as RequestInit).body);
-      expect(body).not.toContain("Asha");
-      expect(body).not.toContain("9876543210");
-      expect(body).toContain("Member_1");
-    }
-  });
 });
 
 vi.mock("../lib/speech", () => ({ canSpeak: () => false, speak: vi.fn(), stopSpeaking: vi.fn() }));
@@ -85,7 +61,11 @@ describe("App extras", () => {
     expect(speak).toHaveBeenCalled();
     await vi.advanceTimersByTimeAsync(31_000);
     expect(screen.queryByText(/Showing a demo family/)).toBeNull();
-    expect(window.localStorage.getItem("saanssafe.household")).not.toContain("Dadi");
+    // A guest's demo uses the server's own sample family; nothing is saved and no family is sent.
+    const urls = fetchMock.mock.calls.map(([url]) => String(url));
+    expect(urls).toContain("/api/shield/demo");
+    expect(urls).not.toContain("/api/shield");
+    expect(urls).not.toContain("/api/family");
     vi.useRealTimers();
   });
 });

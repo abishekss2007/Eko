@@ -27,6 +27,8 @@ Every winter, cold, still air traps smoke and dust over North Indian cities. NAQ
 | F6 | **Impact tracker + civic drafter** | Logs commutes (real µg / kg from the engine) and clean-air habits in the browser. Drafts an RWA clean-air request or an open-burning complaint to the ward office. |
 | F7 | **5 languages + read aloud** | English, Hindi, Tamil, Bengali, Marathi for every Gemini explanation; `<html lang>` and Web Speech voice follow the choice. Rule-based fallback text is English. |
 | 🔑 | **Landing page, sign-up and log-in** | `/` explains the app with a clear **Create free account**, **Watch the 60-second demo** and **Continue as a guest** (no account needed). `/signup` and `/login` create a session; the app header shows who is signed in and a Log out button. |
+| 👪 | **Family members need an account** | Guests can use every air, planner and SOS feature, but adding family members needs a free account. Guests see a "Sign in to add your family" prompt, and the server refuses family reads, saves and Family Shield checks without a session (401), so hiding the UI is not the only guard. The guided demo still works for guests with a fixed sample family chosen by the server. |
+| 🧪 | **Demo account** | `demo@saanssafe.app` / `SaansSafe-Demo-2026`, already holding a four-person sample family (Dadi with COPD, Aarav with asthma, Meera pregnant, Raj). The log-in page shows it with a one-tap **Log in to the demo account** button. It is re-created and its family reset on every start; set `DEMO_ACCOUNT=false` to turn it off. |
 | ▶ | **60-second guided demo** | One button: smog spike → today's plan → family alert → SOS script read aloud → commute savings. Uses a demo family without touching saved data. |
 
 ---
@@ -62,7 +64,7 @@ backend/
 
 **Request flow for the Family Health Shield**
 
-1. The browser replaces names with `Member_1`, `Member_2`…, removes phone numbers from care notes, and sends only age group, conditions and the cleaned note. Phone numbers never leave the device.
+1. The browser replaces names with `Member_1`, `Member_2`…, removes phone numbers from care notes, and sends only age group, conditions and the cleaned note. Names and phone numbers never reach the Shield or Gemini.
 2. The server fetches air data itself (it never trusts client numbers), runs the engines, and decides each member's **risk tier and red flags in code**.
 3. Gemini receives the verified JSON and the care notes inside XML tags and returns schema-locked JSON.
 4. The server **validates** the reply: every member present, every number in the text matches the verified data (±0.5, any script's digits), no dosing language. If anything fails, or there is no key, or it times out, the rule-based explanation is used instead.
@@ -110,7 +112,7 @@ All constants live in [`backend/app/data/assumptions.json`](backend/app/data/ass
 - 16 KB request body cap; upstream errors return a generic 502 without stack traces.
 - AI text is rendered only as React text nodes (no `dangerouslySetInnerHTML`); `tel:` links accept digits and a leading `+` only.
 - **Accounts:** passwords hashed with scrypt (n=2¹⁴, r=8, p=1, 16-byte random salt) and compared in constant time; unknown e-mails still run a dummy hash so timing doesn't reveal who has an account. Sessions are 256-bit random tokens in an `HttpOnly`, `SameSite=Strict`, `Secure` cookie scoped to `/api`; the database stores only their SHA-256, so a leaked database can't be replayed. Sign-up, log-in and log-out reject cross-site `Origin` headers and are limited to 10/min per IP. Wrong e-mail and wrong password give the same message.
-- **What an account holds:** name, e-mail and password hash only. Family members, conditions, care notes and phone numbers stay in the browser, signed in or not.
+- **What an account holds:** name, e-mail, password hash and the family you add (names, age groups, conditions, care notes, doctor and hospital phone). Family endpoints need a session, are scoped to the signed-in account, validate every field and reject cross-site writes. The Family Shield and Gemini still receive members only as `Member_N` codes with phone numbers removed.
 - Container runs as a non-root user.
 
 ## Efficiency

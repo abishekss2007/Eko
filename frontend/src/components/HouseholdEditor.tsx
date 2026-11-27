@@ -13,7 +13,12 @@ import type { Sensitivity } from "../types";
 interface Props {
   household: Household;
   onChange: (next: Household) => void;
+  /** The guided demo's sample family: shown, never edited. */
+  readOnly?: boolean;
 }
+
+/** Keep only characters the server accepts in a phone number. */
+const phoneChars = (value: string) => value.replace(/[^0-9+()\s.-]/g, "");
 
 function MemberFields({
   member,
@@ -41,7 +46,7 @@ function MemberFields({
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
           <label htmlFor={`${base}-name`} className="mb-1 block text-sm font-semibold">
-            Name (stays on this device)
+            Name
           </label>
           <input
             id={`${base}-name`}
@@ -110,16 +115,17 @@ function MemberFields({
   );
 }
 
-export function HouseholdEditor({ household, onChange }: Props) {
+export function HouseholdEditor({ household, onChange, readOnly = false }: Props) {
   const { members } = household;
   const setMember = (i: number, m: Member) => onChange({ ...household, members: members.map((x, j) => (j === i ? m : x)) });
 
   return (
-    <div className="space-y-4">
+    <fieldset disabled={readOnly} className="min-w-0 space-y-4">
+      <legend className="sr-only">Your family</legend>
       <p className="flex items-start gap-2 rounded-lg bg-slate-100 p-3 text-sm">
         <Lock aria-hidden="true" size={18} className="mt-0.5 shrink-0" />
-        Names, notes and phone numbers are saved only in this browser. The server receives age group,
-        conditions and the care note under a code such as Member_1, never names or numbers.
+        Your family is saved privately to your account. The smog check and the AI receive only age group,
+        conditions and the care note under a code such as Member_1, never names or phone numbers.
       </p>
       {members.map((m, i) => (
         <MemberFields
@@ -140,7 +146,7 @@ export function HouseholdEditor({ household, onChange }: Props) {
       </button>
 
       <fieldset className="grid gap-3 rounded-xl border border-slate-300 p-4 sm:grid-cols-2">
-        <legend className="px-1 font-bold">Emergency contacts (stay on this device)</legend>
+        <legend className="px-1 font-bold">Emergency contacts</legend>
         <div>
           <label htmlFor="doctor-phone" className="mb-1 block text-sm font-semibold">
             Family doctor phone
@@ -153,7 +159,7 @@ export function HouseholdEditor({ household, onChange }: Props) {
             maxLength={20}
             className="input"
             value={household.doctorPhone}
-            onChange={(e) => onChange({ ...household, doctorPhone: e.target.value })}
+            onChange={(e) => onChange({ ...household, doctorPhone: phoneChars(e.target.value) })}
           />
         </div>
         <div>
@@ -168,10 +174,10 @@ export function HouseholdEditor({ household, onChange }: Props) {
             maxLength={20}
             className="input"
             value={household.hospitalPhone}
-            onChange={(e) => onChange({ ...household, hospitalPhone: e.target.value })}
+            onChange={(e) => onChange({ ...household, hospitalPhone: phoneChars(e.target.value) })}
           />
         </div>
       </fieldset>
-    </div>
+    </fieldset>
   );
 }

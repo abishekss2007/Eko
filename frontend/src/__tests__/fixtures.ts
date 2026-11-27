@@ -155,6 +155,8 @@ const ROUTES: [string, unknown][] = [
   ["/api/commute", COMMUTE],
   ["/api/civic", CIVIC],
   ["/api/geocode", []],
+  ["/api/family", { members: [], doctor_phone: "", hospital_phone: "" }],
+  ["/api/auth/demo", { email: "demo@saanssafe.app", password: "SaansSafe-Demo-2026" }],
   ["/api/air", AIR],
 ];
 

@@ -34,6 +34,12 @@ class Settings(BaseSettings):
     session_days: int = Field(default=7, ge=1, le=90)
     cookie_secure: bool = Field(default=True, description="Send the session cookie over HTTPS only.")
 
+    # A public, shared demo account (seeded with a sample family at every start) so judges can try
+    # the signed-in features without signing up. Its password is shown on the log-in page on purpose.
+    demo_account: bool = Field(default=True, description="Create and reset the shared demo account.")
+    demo_email: str = Field(default="demo@saanssafe.app", max_length=254)
+    demo_password: SecretStr = Field(default=SecretStr("SaansSafe-Demo-2026"), min_length=8)
+
     enable_api_docs: bool = False
     static_dir: Path | None = Field(default=None, description="Built frontend to serve at '/'.")
 

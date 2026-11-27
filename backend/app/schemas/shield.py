@@ -34,13 +34,18 @@ class MemberInput(BaseModel):
         return sanitize_user_text(value)
 
 
-class ShieldRequest(BaseModel):
+class DemoShieldRequest(BaseModel):
+    """Guided-demo request: place and language only. The server supplies the sample family."""
+
     model_config = ConfigDict(extra="forbid")
 
     latitude: float = Field(ge=-90, le=90)
     longitude: float = Field(ge=-180, le=180)
     simulate: bool = False
     language: Language = "en"
+
+
+class ShieldRequest(DemoShieldRequest):
     members: list[MemberInput] = Field(min_length=1, max_length=10)
 
     @field_validator("members")

@@ -6,6 +6,7 @@ import { CivicDrafter } from "./components/CivicDrafter";
 import { CommutePlanner } from "./components/CommutePlanner";
 import { AccountMenu } from "./components/AccountMenu";
 import { DemoBar } from "./components/DemoBar";
+import { FamilySignInPrompt } from "./components/FamilySignInPrompt";
 import { HouseholdEditor } from "./components/HouseholdEditor";
 import { ImpactTracker } from "./components/ImpactTracker";
 import { IndoorPlanner } from "./components/IndoorPlanner";
@@ -17,11 +18,13 @@ import { TodayPlan } from "./components/TodayPlan";
 import { useAsync } from "./hooks/useAsync";
 import { useDebounced } from "./hooks/useDebounced";
 import { useDemo } from "./hooks/useDemo";
+import { useFamily } from "./hooks/useFamily";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useSmogNotification } from "./hooks/useSmogNotification";
-import { fetchAir, fetchPlan, fetchShield } from "./lib/api";
+import { fetchAir, fetchDemoShield, fetchPlan, fetchShield } from "./lib/api";
+import { useAuth } from "./lib/auth";
 import { fmt, pretty } from "./lib/format";
-import { EMPTY_HOUSEHOLD, parseHousehold, tokenize, untokenize, type Household } from "./lib/household";
+import { tokenize, untokenize, type Household } from "./lib/household";
 import { parseImpact, today, type ImpactEntry } from "./lib/impact";
 import { LANGUAGES, useLanguage } from "./lib/language";
 import { isAlertLevel } from "./lib/naqi";
@@ -35,7 +38,10 @@ const AMBULANCE = "108";
 const EMERGENCY = "112";
 const DEFAULT_PLACE = QUICK_PICKS[0] as Place;
 
-/** Shown only during the guided demo; never saved over the family's own data. */
+/**
+ * Shown only during the guided demo; never saved over the family's own data.
+ * Same people, in the same order, as the server's demo family (Member_1 = Dadi...).
+ */
 const DEMO_HOUSEHOLD: Household = {
   members: [
     {
@@ -46,10 +52,20 @@ const DEMO_HOUSEHOLD: Household = {
       careNote: "Dr. Sharma: keep the nebulizer ready in winter and skip the morning walk.",
     },
     { id: "demo-aarav", name: "Aarav", ageGroup: "child", sensitivities: ["asthma"], careNote: "Rescue inhaler in school bag." },
+    { id: "demo-meera", name: "Meera", ageGroup: "adult", sensitivities: ["pregnancy"], careNote: "" },
+    { id: "demo-raj", name: "Raj", ageGroup: "adult", sensitivities: [], careNote: "" },
   ],
   doctorPhone: "",
   hospitalPhone: "",
 };
+
+const SAVE_STATUS = {
+  idle: "",
+  loading: "Loading your family…",
+  saving: "Saving to your account…",
+  saved: "Saved to your account.",
+  error: "",
+} as const;
 
 const VIEWS = [
   { id: "today", label: "Today", title: "Today", Icon: Sparkles },
@@ -102,14 +118,18 @@ function basicHandoff(air: AirReport | null): string {
 export default function Dashboard({ startDemo = false }: { startDemo?: boolean }) {
   const { language, setLanguage } = useLanguage();
   const [place, setPlace] = useLocalStorage<Place>("saanssafe.place", parsePlace, DEFAULT_PLACE);
-  const [savedHousehold, setHousehold] = useLocalStorage("saanssafe.household", parseHousehold, EMPTY_HOUSEHOLD);
+  const { user } = useAuth();
+  const signedIn = Boolean(user);
+  const family = useFamily(user ? user.id : null);
   const [impact, setImpact] = useLocalStorage<ImpactEntry[]>("saanssafe.impact", parseImpact, []);
   const [simulate, setSimulate] = useState(false);
   const [demoCommute, setDemoCommute] = useState(0);
   const [demoFamily, setDemoFamily] = useState(false);
 
-  const household = demoFamily ? DEMO_HOUSEHOLD : savedHousehold;
+  const household = demoFamily ? DEMO_HOUSEHOLD : family.household;
   const members = household.members;
+  // Guests can watch the demo family but never send a family of their own; the server enforces this.
+  const guestDemo = demoFamily && !signedIn;
   const context = { latitude: place.latitude, longitude: place.longitude, simulate, language };
 
   const airKey = `${place.latitude},${place.longitude},${simulate}`;
@@ -117,9 +137,11 @@ export default function Dashboard({ startDemo = false }: { startDemo?: boolean }
 
   const payload = useMemo(() => tokenize(members), [members]);
   const familyKey = useDebounced(`${airKey}|${language}|${JSON.stringify(payload)}`, 600);
-  const plan = useAsync(familyKey, (signal) => fetchPlan({ ...context, members: payload }, signal));
-  const shield = useAsync(payload.length ? familyKey : null, (signal) =>
-    fetchShield({ ...context, members: payload }, signal),
+  const plan = useAsync(`${familyKey}|${guestDemo}`, (signal) =>
+    fetchPlan({ ...context, members: guestDemo ? [] : payload }, signal),
+  );
+  const shield = useAsync(payload.length ? `${familyKey}|${guestDemo}` : null, (signal) =>
+    guestDemo ? fetchDemoShield(context, signal) : fetchShield({ ...context, members: payload }, signal),
   );
 
   const result = payload.length ? shield.data : null;
@@ -219,7 +241,7 @@ export default function Dashboard({ startDemo = false }: { startDemo?: boolean }
         </ul>
         <div className="mt-auto hidden rounded-2xl bg-slate-100 p-4 text-sm text-slate-700 lg:block">
           <p className="mb-1 font-bold text-slate-900">Private by design</p>
-          Family details stay on this device. The server only sees codes like Member_1.
+          Your family is saved to your account. The AI only ever sees codes like Member_1, never names.
         </div>
       </nav>
 
@@ -359,12 +381,30 @@ export default function Dashboard({ startDemo = false }: { startDemo?: boolean }
                         Showing a demo family. Your own family details are untouched.
                       </p>
                     )}
-                    <HouseholdEditor household={household} onChange={demoFamily ? () => {} : setHousehold} />
+                    {demoFamily || signedIn ? (
+                      <HouseholdEditor household={household} onChange={family.update} readOnly={demoFamily} />
+                    ) : (
+                      <FamilySignInPrompt />
+                    )}
+                    {signedIn && !demoFamily && (
+                      <p role="status" className="mt-3 text-sm text-slate-700">
+                        {SAVE_STATUS[family.status]}
+                      </p>
+                    )}
+                    {family.error && !demoFamily && (
+                      <p role="alert" className="mt-3 rounded-2xl bg-red-50 p-3 text-red-900">
+                        {family.error}
+                      </p>
+                    )}
                   </div>
                   <div aria-live="polite" aria-busy={shield.loading}>
                     {!payload.length && (
                       <div className="grid h-full min-h-[10rem] place-items-center rounded-2xl border-2 border-dashed border-slate-300 p-6 text-center text-slate-700">
-                        <p>Add your family members to get personal smog alerts and stay-safe steps.</p>
+                        <p>
+                          {signedIn
+                            ? "Add your family members to get personal smog alerts and stay-safe steps."
+                            : "Personal smog alerts for each family member appear here once you sign in and add them."}
+                        </p>
                       </div>
                     )}
                     {shield.loading && payload.length > 0 && <p>Checking your family&apos;s risk…</p>}

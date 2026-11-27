@@ -1,11 +1,17 @@
-import { Eye, EyeOff, LogIn, UserPlus, Wind } from "lucide-react";
+import { Eye, EyeOff, LogIn, PlayCircle, UserPlus, Wind } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { fetchDemoAccount } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { Link, navigate } from "../lib/router";
 import { ThemeToggle } from "../lib/theme";
 
 interface Props {
   mode: "login" | "signup";
+}
+
+/** Where to go after signing in. Only known in-app targets are allowed (no open redirect). */
+function afterAuth(): string {
+  return new URLSearchParams(window.location.search).get("next") === "family" ? "/app#family" : "/app";
 }
 
 /** Sign-up and log-in share one accessible form. Errors are announced and focus moves to them. */
@@ -18,7 +24,20 @@ export function AuthPage({ mode }: Props) {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [demo, setDemo] = useState<{ email: string; password: string } | null>(null);
   const errorRef = useRef<HTMLParagraphElement>(null);
+
+  useEffect(() => {
+    if (signingUp) return;
+    let live = true;
+    fetchDemoAccount().then(
+      (account) => live && setDemo(account),
+      () => undefined, // no demo account on this server
+    );
+    return () => {
+      live = false;
+    };
+  }, [signingUp]);
 
   useEffect(() => {
     document.title = signingUp ? "Sign up · SaansSafe" : "Log in · SaansSafe";
@@ -32,17 +51,28 @@ export function AuthPage({ mode }: Props) {
       errorRef.current?.focus();
       return;
     }
+    await run(() => (signingUp ? signup(name, email, password) : login(email, password)));
+  };
+
+  const run = async (action: () => Promise<void>) => {
     setBusy(true);
     try {
-      if (signingUp) await signup(name, email, password);
-      else await login(email, password);
-      navigate("/app");
+      await action();
+      navigate(afterAuth());
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
       errorRef.current?.focus();
     } finally {
       setBusy(false);
     }
+  };
+
+  const logInDemo = async () => {
+    if (!demo) return;
+    setError("");
+    setEmail(demo.email);
+    setPassword(demo.password);
+    await run(() => login(demo.email, demo.password));
   };
 
   return (
@@ -65,7 +95,7 @@ export function AuthPage({ mode }: Props) {
           <h1 className="mb-1 text-3xl font-black text-slate-900">{signingUp ? "Create your account" : "Welcome back"}</h1>
           <p className="mb-6 text-slate-700">
             {signingUp
-              ? "Free. Your family's health details stay on your device."
+              ? "Free. Save your family once and get smog alerts for each of them."
               : "Log in to see today's plan for your family."}
           </p>
 
@@ -149,9 +179,24 @@ export function AuthPage({ mode }: Props) {
             </button>
           </form>
 
+          {demo && (
+            <section aria-labelledby="demo-title" className="mt-6 rounded-2xl bg-teal-50 p-4 text-slate-800">
+              <h2 id="demo-title" className="font-bold text-slate-900">
+                Try the demo account
+              </h2>
+              <p className="mb-3 text-sm">
+                A sample family is already added. E-mail <strong className="break-all">{demo.email}</strong>, password{" "}
+                <strong>{demo.password}</strong>
+              </p>
+              <button type="button" className="btn-secondary w-full" disabled={busy} onClick={logInDemo}>
+                <PlayCircle aria-hidden="true" size={18} /> Log in to the demo account
+              </button>
+            </section>
+          )}
+
           <p className="mt-6 text-center">
             {signingUp ? "Already have an account? " : "New to SaansSafe? "}
-            <Link href={signingUp ? "/login" : "/signup"} className="font-semibold text-teal-800 underline underline-offset-4">
+            <Link href={`${signingUp ? "/login" : "/signup"}${window.location.search}`} className="font-semibold text-teal-800 underline underline-offset-4">
               {signingUp ? "Log in" : "Create an account"}
             </Link>
           </p>
