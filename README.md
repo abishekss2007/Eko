@@ -166,9 +166,13 @@ SaansSafe stores accounts, sessions and family members in **Postgres when `DATAB
 
 On start the log shows `Accounts database: postgres`. The demo account is re-seeded there on every start as before. To run the account tests against a throwaway Postgres: `TEST_DATABASE_URL=postgresql://… pytest tests/test_auth.py tests/test_family.py tests/test_database.py` (it empties the tables, so never point it at the real database).
 
-## Deploy to Render
+## Deploy: Vercel + Render + Supabase
 
-`render.yaml` describes one free Docker web service in Singapore (next to the Supabase project). Render → **New** → **Blueprint** → pick this repository, then paste `DATABASE_URL` and, optionally, `GEMINI_API_KEY` when asked. Render serves it over HTTPS, so `COOKIE_SECURE=true` stays on. Free instances sleep after 15 minutes idle and take about a minute to wake.
+* **Frontend on Vercel:** project root `frontend/`. `frontend/vercel.json` builds the Vite app, sends every page route to `index.html`, adds the same security headers as the backend, and proxies `/api/*` to the Render backend. Because the browser only ever talks to the Vercel domain, the session cookie stays first-party (`SameSite=Strict`) and no CORS is needed.
+* **Backend on Render:** `render.yaml` describes one free Docker web service in Singapore. Set `DATABASE_URL` (and optionally `GEMINI_API_KEY`) in Render's environment settings, and keep `ALLOWED_ORIGINS` set to the Vercel address so sign-in through the proxy passes the cross-site check.
+* **Database on Supabase:** the backend logs in as its own `saanssafe_app` role (owner of the three tables) through the session pooler.
+
+Free Render instances sleep after 15 minutes idle and take about a minute to wake, so the first request after a quiet spell is slow.
 
 ## Phone app
 

@@ -2,6 +2,7 @@
 
 from functools import lru_cache
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -46,6 +47,18 @@ class Settings(BaseSettings):
     )
     session_days: int = Field(default=7, ge=1, le=90)
     cookie_secure: bool = Field(default=True, description="Send the session cookie over HTTPS only.")
+    allowed_origins: str = Field(
+        default="",
+        max_length=2000,
+        description="Comma-separated extra origins allowed to sign in, e.g. a frontend that proxies /api here.",
+    )
+
+    @property
+    def allowed_origin_hosts(self) -> frozenset[str]:
+        """Host[:port] of each ALLOWED_ORIGINS entry."""
+        return frozenset(
+            urlsplit(origin.strip()).netloc for origin in self.allowed_origins.split(",") if origin.strip()
+        )
 
     # A public, shared demo account (seeded with a sample family at every start) so judges can try
     # the signed-in features without signing up. Its password is shown on the log-in page on purpose.
