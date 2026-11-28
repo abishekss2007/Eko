@@ -68,13 +68,13 @@ export function DateStrip({ place, report, selected, onSelect }: StripProps) {
 
   // Keep today in view on narrow screens, where the strip scrolls sideways.
   useEffect(() => {
-    todayRef.current?.scrollIntoView?.({ block: "nearest", inline: "end" });
+    // Scroll only the strip sideways; scrollIntoView would also jump the whole page down to it.
+    const strip = todayRef.current?.closest("ul");
+    if (strip) strip.scrollLeft = strip.scrollWidth;
   }, [today]);
 
   const chip = (active: boolean) =>
-    `flex min-h-[44px] w-full min-w-[5.25rem] snap-end flex-col items-center gap-0.5 rounded-2xl border px-2 py-2 text-center transition ${
-      active ? "border-teal-700 bg-teal-50 text-teal-950 ring-2 ring-teal-600" : "border-slate-200 bg-white text-slate-900 hover:bg-slate-100"
-    }`;
+    `pill !w-full min-w-[5.25rem] snap-end !gap-1 !py-3 text-center transition ${active ? "pill-active" : "hover:brightness-110"}`;
 
   return (
     <section aria-labelledby="days-title" className="card p-3 sm:p-4">
@@ -94,7 +94,7 @@ export function DateStrip({ place, report, selected, onSelect }: StripProps) {
               if (!value) return;
               onSelect(value >= today ? null : value < addDays(today, -MAX_DAYS_BACK) ? addDays(today, -MAX_DAYS_BACK) : value);
             }}
-            className="min-h-[44px] rounded-xl border border-slate-300 bg-white px-2 text-slate-900"
+            className="input !w-auto !py-1"
           />
         </label>
       </div>
@@ -107,7 +107,7 @@ export function DateStrip({ place, report, selected, onSelect }: StripProps) {
               <button type="button" aria-pressed={active} onClick={() => onSelect(d)} className={chip(active)}>
                 <span className="text-xs font-semibold uppercase">{d === addDays(today, -1) ? "Yest." : weekday(d)}</span>
                 <span className="text-sm font-bold">{shortDate(d)}</span>
-                <span className="text-xs tabular-nums text-slate-700">
+                <span className="text-xs tabular-nums opacity-80">
                   {s ? `${fmt(s.temp_max_c)}° / ${fmt(s.temp_min_c)}°` : week.loading ? "…" : "–"}
                 </span>
                 {s && <NaqiDot value={s.naqi} category={s.naqi_category} />}
@@ -119,7 +119,7 @@ export function DateStrip({ place, report, selected, onSelect }: StripProps) {
           <button ref={todayRef} type="button" aria-pressed={selected === null} onClick={() => onSelect(null)} className={chip(selected === null)}>
             <span className="text-xs font-semibold uppercase">Today</span>
             <span className="text-sm font-bold">{shortDate(today)}</span>
-            <span className="text-xs tabular-nums text-slate-700">
+            <span className="text-xs tabular-nums opacity-80">
               {report ? `Now ${fmt(report.current.temperature_c)}°` : "Live"}
             </span>
             {report && <NaqiDot value={report.naqi.value} category={report.naqi.category} />}

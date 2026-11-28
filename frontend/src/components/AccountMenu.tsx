@@ -8,7 +8,7 @@ export function AccountMenu() {
   if (user === undefined) return null;
   if (!user) {
     return (
-      <Link href="/login" className="btn-ghost !px-3" title="Log in">
+      <Link href="/login" className="btn-ghost !px-2.5" title="Log in">
         <LogIn aria-hidden="true" size={18} />
         <span className="sr-only md:not-sr-only">Log in</span>
         <span className="sr-only"> (browsing as a guest)</span>
@@ -18,14 +18,14 @@ export function AccountMenu() {
   return (
     <div className="flex items-center gap-1">
       <span className="hidden items-center gap-1.5 rounded-full bg-slate-100 py-1 pl-1 pr-3 text-sm font-medium text-slate-800 md:inline-flex">
-        <span aria-hidden="true" className="grid h-7 w-7 place-items-center rounded-full bg-teal-700 text-xs font-bold text-white">
+        <span aria-hidden="true" className="grid h-7 w-7 place-items-center rounded-full bg-iris text-xs font-bold text-snow">
           {user.name.slice(0, 1).toUpperCase()}
         </span>
         Hi, {user.name}
       </span>
       <button
         type="button"
-        className="btn-ghost !px-3"
+        className="btn-ghost !px-2.5"
         title="Log out"
         onClick={async () => {
           await logout();

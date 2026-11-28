@@ -11,7 +11,7 @@ interface Props {
 /** Caption bar for the guided demo. Announced politely to screen readers. */
 export function DemoBar({ step, current, onNext, onStop }: Props) {
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 border-t-4 border-amber-400 bg-ink-950/95 text-snow shadow-2xl backdrop-blur">
+    <div className="fixed inset-x-0 bottom-0 z-40 border-t-4 border-amber-400 bg-iris-night/95 text-snow shadow-2xl backdrop-blur">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 py-3">
         <p className="text-sm font-bold text-sun" aria-hidden="true">
           Demo {step + 1}/{DEMO_STEPS.length}

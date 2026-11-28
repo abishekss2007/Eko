@@ -323,8 +323,8 @@ export function HistoryPanel({ place }: { place: Place }) {
         {PERIODS.map((p) => (
           <label
             key={p}
-            className={`cursor-pointer rounded-full border px-4 py-2 text-sm font-semibold has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-teal-600 ${
-              p === period ? "border-teal-700 bg-teal-50 text-teal-900" : "border-slate-300 bg-white text-slate-800 hover:bg-slate-100"
+            className={`cursor-pointer rounded-full border px-4 py-2 text-sm font-semibold has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-600 ${
+              p === period ? "border-white/50 bg-iris text-snow" : "border-slate-900/15 bg-slate-900/5 text-slate-800 hover:bg-slate-900/10"
             }`}
           >
             <input type="radio" name="history-period" value={p} checked={p === period} onChange={() => setPeriod(p)} className="sr-only" />

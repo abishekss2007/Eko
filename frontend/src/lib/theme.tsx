@@ -13,16 +13,16 @@ function stored(): Theme | null {
   }
 }
 
-/** The saved choice, else the system setting. */
+/** The saved choice, else the night-sky look the app is designed around. */
 export function initialTheme(): Theme {
-  return stored() ?? (window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  return stored() ?? "dark";
 }
 
 const listeners = new Set<() => void>();
 
 export function applyTheme(theme: Theme): void {
   document.documentElement.dataset.theme = theme;
-  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme === "dark" ? "#020617" : "#f8fafc");
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme === "dark" ? "#1c1b33" : "#ece5fd");
   listeners.forEach((notify) => notify());
 }
 
@@ -54,7 +54,7 @@ export function useTheme(): Theme {
 export function ThemeToggle({ className = "btn-ghost" }: { className?: string }) {
   const dark = useTheme() === "dark";
   return (
-    <button type="button" className={`${className} !px-3`} aria-pressed={dark} onClick={toggleTheme} title="Dark mode">
+    <button type="button" className={`${className} !px-2.5`} aria-pressed={dark} onClick={toggleTheme} title="Dark mode">
       {dark ? <Sun aria-hidden="true" size={18} /> : <Moon aria-hidden="true" size={18} />}
       <span className="sr-only">Dark mode</span>
     </button>

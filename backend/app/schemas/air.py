@@ -1,6 +1,6 @@
 """Models for verified air-quality and weather data."""
 
-from datetime import datetime
+from datetime import date, datetime
 
 from pydantic import BaseModel, Field
 
@@ -64,6 +64,34 @@ class BestWindow(BaseModel):
     category: str
 
 
+class WeatherHour(BaseModel):
+    time: datetime = Field(description="Local time.")
+    temperature_c: float | None
+    weather_code: int | None = Field(description="WMO weather interpretation code.")
+    precipitation_probability: float | None = Field(description="%")
+    is_day: bool
+
+
+class WeatherDay(BaseModel):
+    date: date
+    weather_code: int | None = Field(description="WMO weather interpretation code.")
+    temp_max_c: float | None
+    temp_min_c: float | None
+    precipitation_probability: float | None = Field(description="Highest chance of rain that day, %")
+
+
+class WeatherOutlook(BaseModel):
+    """The sky now and the forecast, for the weather-style home screen."""
+
+    weather_code: int | None = Field(description="WMO weather interpretation code for now.")
+    condition: str | None = Field(description="Plain words for the weather code, e.g. 'Fog'.")
+    is_day: bool
+    today_max_c: float | None
+    today_min_c: float | None
+    hourly: list[WeatherHour] = Field(description="Next 24 hours.")
+    daily: list[WeatherDay] = Field(description="Today and the next 6 days.")
+
+
 class AirReport(BaseModel):
     """Everything the dashboard shows. Every number here is computed by code."""
 
@@ -73,6 +101,7 @@ class AirReport(BaseModel):
     inversion: InversionResult
     best_window: BestWindow | None
     forecast: list[HourlyPoint] = Field(description="Next 24 hours of PM2.5 for the chart.")
+    weather: WeatherOutlook | None = Field(default=None, description="Weather forecast; None if unavailable.")
     simulated: bool
     source: str
 

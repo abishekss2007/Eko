@@ -1,11 +1,11 @@
 // SaansSafe service worker: keeps the app shell and the last air reading available offline.
 // SOS phone numbers live in localStorage, so the SOS panel works offline too.
 // Bump these names whenever caching rules change: activate() deletes every other cache.
-const SHELL = "saanssafe-shell-v2";
-const DATA = "saanssafe-data-v2";
+const SHELL = "saanssafe-shell-v3";
+const DATA = "saanssafe-data-v3";
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(SHELL).then((cache) => cache.addAll(["/", "/favicon.svg"])));
+  event.waitUntil(caches.open(SHELL).then((cache) => cache.addAll(["/", "/favicon.svg", "/manifest.webmanifest", "/icons/icon-192.png"])));
   self.skipWaiting();
 });
 

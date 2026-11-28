@@ -1,10 +1,24 @@
 {
-  "name": "SaansSafe",
+  "id": "/app",
+  "name": "SaansSafe: smog and weather for your family",
   "short_name": "SaansSafe",
-  "description": "Winter smog alerts and a one-tap family SOS.",
-  "start_url": "/",
+  "description": "Weather, winter smog alerts, safe hours to go out and a one-tap family SOS.",
+  "start_url": "/app",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#f8fafc",
-  "theme_color": "#0f172a",
-  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }]
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait",
+  "background_color": "#1c1b33",
+  "theme_color": "#1c1b33",
+  "categories": ["health", "weather", "lifestyle"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ],
+  "shortcuts": [
+    { "name": "Emergency SOS", "short_name": "SOS", "url": "/app#sos", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "History", "url": "/app#history", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
+  ]
 }

@@ -226,10 +226,10 @@ export function LocationBar({ place, onPlace, simulate, onSimulate }: Props) {
                 onClick={() => chooseResult(r)}
                 onMouseEnter={() => setActive(i)}
                 className={`flex min-h-[44px] cursor-pointer items-center gap-2 px-3 py-2 text-slate-900 ${
-                  i === active ? "bg-teal-50" : ""
+                  i === active ? "bg-brand-50" : ""
                 }`}
               >
-                <MapPin aria-hidden="true" size={16} className="shrink-0 text-teal-700" />
+                <MapPin aria-hidden="true" size={16} className="shrink-0 text-brand-700" />
                 <span>
                   <span className="font-semibold">{r.name}</span>
                   <span className="text-slate-600">

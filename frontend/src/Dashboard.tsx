@@ -1,4 +1,4 @@
-import { Clock, History, Home, Leaf, MapPin, PhoneCall, PlayCircle, ShieldCheck, Sparkles, TrainFront, Wind } from "lucide-react";
+import { Clock, History, Home, Leaf, MapPin, PhoneCall, PlayCircle, Plus, ShieldCheck, Sparkles, TrainFront, Wind } from "lucide-react";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { AirDashboard } from "./components/AirDashboard";
 import { BestWindowChart } from "./components/BestWindowChart";
@@ -8,15 +8,18 @@ import { AccountMenu } from "./components/AccountMenu";
 import { DateStrip, DayView } from "./components/DayPicker";
 import { DemoBar } from "./components/DemoBar";
 import { FamilySignInPrompt } from "./components/FamilySignInPrompt";
+import { ForecastSheet } from "./components/ForecastSheet";
 import { HistoryPanel } from "./components/HistoryPanel";
 import { HouseholdEditor } from "./components/HouseholdEditor";
 import { ImpactTracker } from "./components/ImpactTracker";
+import { InstallCard } from "./components/InstallCard";
 import { IndoorPlanner } from "./components/IndoorPlanner";
 import { LocationBar, QUICK_PICKS } from "./components/LocationBar";
 import { Section } from "./components/Section";
 import { ShieldResults } from "./components/ShieldResults";
 import { SosPanel } from "./components/SosPanel";
 import { TodayPlan } from "./components/TodayPlan";
+import { WeatherHero } from "./components/WeatherHero";
 import { useAsync } from "./hooks/useAsync";
 import { useDebounced } from "./hooks/useDebounced";
 import { useDemo } from "./hooks/useDemo";
@@ -72,9 +75,9 @@ const SAVE_STATUS = {
 const VIEWS = [
   { id: "today", label: "Today", title: "Today", Icon: Sparkles },
   { id: "family", label: "Family", title: "Family & SOS", Icon: ShieldCheck },
-  { id: "home", label: "Home air", title: "Clean air at home", Icon: Home },
   { id: "history", label: "History", title: "Weather and air history", Icon: History },
   { id: "commute", label: "Commute", title: "Cleaner commute", Icon: TrainFront },
+  { id: "home", label: "Home air", title: "Clean air at home", Icon: Home },
   { id: "impact", label: "Impact", title: "Your impact", Icon: Leaf },
 ] as const;
 type View = (typeof VIEWS)[number]["id"];
@@ -203,6 +206,12 @@ export default function Dashboard({ startDemo = false }: { startDemo?: boolean }
     }, 0);
   };
   const current = VIEWS.find((v) => v.id === view) ?? VIEWS[0];
+  // The round middle button: back to Today, then straight into the place search.
+  const findPlace = () => {
+    setPicked({ place: placeKey, day: null });
+    openView("today", "place-card");
+    window.setTimeout(() => document.querySelector<HTMLInputElement>("#place-card input[role='combobox']")?.focus(), 0);
+  };
   const pickedDay = picked.place === placeKey && !demo.active ? picked.day : null;
   const pickDay = (day: string | null) => setPicked({ place: placeKey, day });
 
@@ -217,49 +226,66 @@ export default function Dashboard({ startDemo = false }: { startDemo?: boolean }
 
       <nav
         aria-label="App sections"
-        className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/90 backdrop-blur-lg lg:inset-y-0 lg:left-0 lg:right-auto lg:flex lg:w-64 lg:flex-col lg:border-r lg:border-t-0 lg:bg-white lg:px-4 lg:py-6"
+        className="tabbar safe-bottom fixed inset-x-0 bottom-0 z-30 border-t lg:inset-y-0 lg:left-0 lg:right-auto lg:flex lg:w-64 lg:flex-col lg:border-r lg:border-t-0 lg:px-4 lg:py-6"
       >
-        <Link href="/" className="mb-8 hidden items-center gap-2 px-3 text-xl font-black text-slate-900 lg:flex" aria-label="SaansSafe home">
-          <span aria-hidden="true" className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-teal-500 to-sky-600 text-snow">
+        <Link href="/" className="mb-8 hidden items-center gap-2 px-3 text-xl font-black text-slate-950 lg:flex" aria-label="SaansSafe home">
+          <span aria-hidden="true" className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-iris-light to-iris text-snow">
             <Wind size={20} />
           </span>
           SaansSafe
         </Link>
-        <ul className="mx-auto grid max-w-xl grid-cols-6 lg:mx-0 lg:max-w-none lg:grid-cols-1 lg:gap-1">
-          {VIEWS.map(({ id, label, Icon }) => {
+        {/* The raised middle of the bar on phones, behind the round button. */}
+        <span
+          aria-hidden="true"
+          className="tabbar pointer-events-none absolute -top-4 left-1/2 h-[calc(100%+1rem)] w-44 -translate-x-1/2 rounded-t-[50%] border-t lg:hidden"
+        />
+        <ul className="relative mx-auto grid max-w-xl grid-cols-7 items-end px-1 lg:mx-0 lg:max-w-none lg:grid-cols-1 lg:gap-1 lg:px-0">
+          {VIEWS.map(({ id, label, Icon }, i) => {
             const active = view === id;
-            return (
+            return [
+              i === 3 && (
+                <li key="find" className="flex justify-center lg:hidden">
+                  <button
+                    type="button"
+                    onClick={findPlace}
+                    className="-mt-7 mb-2 grid h-16 w-16 place-items-center rounded-full bg-gradient-to-br from-[#f5f5f9] to-[#dadfe7] text-iris shadow-[0_8px_20px_rgba(0,0,0,0.35),inset_0_2px_0_rgba(255,255,255,0.9)] ring-[3px] ring-white/40 transition active:scale-95"
+                  >
+                    <Plus aria-hidden="true" size={30} strokeWidth={2.5} />
+                    <span className="sr-only">Find a place</span>
+                  </button>
+                </li>
+              ),
               <li key={id}>
                 <button
                   type="button"
                   aria-current={active ? "page" : undefined}
                   onClick={() => openView(id)}
-                  className={`group flex min-h-[56px] w-full flex-col items-center justify-center gap-0.5 text-xs font-semibold transition lg:min-h-[44px] lg:flex-row lg:justify-start lg:gap-3 lg:rounded-xl lg:px-3 lg:text-base ${
-                    active ? "text-teal-800 lg:bg-teal-50" : "text-slate-700 hover:text-slate-900 lg:hover:bg-slate-100"
+                  className={`group flex min-h-[60px] w-full flex-col items-center justify-center gap-0.5 text-[11px] font-semibold transition lg:min-h-[44px] lg:flex-row lg:justify-start lg:gap-3 lg:rounded-xl lg:px-3 lg:text-base ${
+                    active ? "text-slate-950 lg:bg-iris/30" : "text-slate-600 hover:text-slate-950 lg:hover:bg-slate-900/10"
                   }`}
                 >
                   <span
-                    className={`grid h-8 w-12 place-items-center rounded-full transition lg:h-auto lg:w-auto ${active ? "bg-teal-100 lg:bg-transparent" : ""}`}
+                    className={`grid h-8 w-10 place-items-center rounded-full transition lg:h-auto lg:w-auto ${active ? "bg-iris text-snow lg:bg-transparent lg:text-current" : ""}`}
                   >
                     <Icon aria-hidden="true" size={20} />
                   </span>
                   {label}
                 </button>
-              </li>
-            );
+              </li>,
+            ];
           })}
         </ul>
-        <div className="mt-auto hidden rounded-2xl bg-slate-100 p-4 text-sm text-slate-700 lg:block">
-          <p className="mb-1 font-bold text-slate-900">Private by design</p>
+        <div className="card mt-auto hidden p-4 text-sm text-slate-700 lg:block">
+          <p className="mb-1 font-bold text-slate-950">Private by design</p>
           Your family is saved to your account. The AI only ever sees codes like Member_1, never names.
         </div>
       </nav>
 
       <div className="lg:pl-64">
-        <header id="top" className="sticky top-0 z-20 border-b border-slate-200 bg-slate-50/85 backdrop-blur-lg">
-          <div className="mx-auto flex max-w-6xl items-center gap-2 px-4 py-3">
-            <Link href="/" className="flex items-center gap-2 text-lg font-black text-slate-900 lg:hidden" aria-label="SaansSafe home">
-              <span aria-hidden="true" className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-teal-500 to-sky-600 text-snow">
+        <header id="top" className="safe-top sticky top-0 z-20 border-b border-slate-900/10 bg-slate-50/60 backdrop-blur-xl">
+          <div className="mx-auto flex max-w-6xl items-center gap-2 px-3 py-2.5 sm:px-4">
+            <Link href="/" className="flex items-center gap-2 text-lg font-black text-slate-950 lg:hidden" aria-label="SaansSafe home">
+              <span aria-hidden="true" className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-iris-light to-iris text-snow">
                 <Wind size={18} />
               </span>
               <span className="hidden sm:inline">SaansSafe</span>
@@ -267,7 +293,7 @@ export default function Dashboard({ startDemo = false }: { startDemo?: boolean }
             <p className="hidden text-2xl font-bold text-slate-900 lg:block" aria-hidden="true">
               {current.title}
             </p>
-            <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
+            <div className="ml-auto flex min-w-0 items-center gap-1 sm:gap-2">
               <label htmlFor="language" className="sr-only">
                 Language for advice and read-aloud
               </label>
@@ -275,7 +301,7 @@ export default function Dashboard({ startDemo = false }: { startDemo?: boolean }
                 id="language"
                 value={language}
                 onChange={(e) => setLanguage(e.target.value as Language)}
-                className="min-h-[44px] max-w-[6.5rem] rounded-xl border border-slate-300 bg-white px-2 text-sm font-medium text-slate-900 sm:max-w-none"
+                className="min-h-[44px] w-[5.5rem] rounded-2xl border border-slate-900/15 bg-white/60 px-2 text-sm font-medium text-slate-950 sm:w-auto"
               >
                 {LANGUAGES.map((l) => (
                   <option key={l.code} value={l.code}>
@@ -285,7 +311,7 @@ export default function Dashboard({ startDemo = false }: { startDemo?: boolean }
               </select>
               <button
                 type="button"
-                className="btn-secondary !px-3"
+                className="btn-secondary !px-2.5"
                 onClick={demo.active ? demo.stop : demo.start}
               >
                 <PlayCircle aria-hidden="true" size={18} />
@@ -294,7 +320,7 @@ export default function Dashboard({ startDemo = false }: { startDemo?: boolean }
               <ThemeToggle />
               <a
                 href="#sos"
-                className="btn-danger !px-3 sm:!px-4"
+                className="btn-danger !px-2.5 sm:!px-4"
                 onClick={(e) => {
                   e.preventDefault();
                   openView("family", "sos");
@@ -307,7 +333,7 @@ export default function Dashboard({ startDemo = false }: { startDemo?: boolean }
           </div>
         </header>
 
-        <main id="main" tabIndex={-1} className={`mx-auto max-w-6xl px-4 pb-32 pt-6 lg:pb-12 ${demo.active ? "!pb-56" : ""}`}>
+        <main id="main" tabIndex={-1} className={`mx-auto max-w-6xl px-4 pb-36 pt-4 lg:pb-12 lg:pt-6 ${demo.active ? "!pb-60" : ""}`}>
           <h1 className="sr-only">SaansSafe family smog dashboard</h1>
 
           <div
@@ -318,9 +344,21 @@ export default function Dashboard({ startDemo = false }: { startDemo?: boolean }
             role="region"
             tabIndex={-1}
             aria-label="Today"
-            className="view-enter space-y-6"
+            className="view-enter space-y-5"
           >
-            <section aria-labelledby="location-title" className="card p-4 sm:p-5">
+            {!pickedDay && (
+              <div className="mx-auto max-w-2xl space-y-4">
+                <WeatherHero
+                  report={report}
+                  placeName={place.name}
+                  loading={air.loading}
+                  onChangePlace={() => openView("today", "place-card")}
+                />
+                {report && <ForecastSheet report={report} />}
+              </div>
+            )}
+
+            <section id="place-card" aria-labelledby="location-title" className="card scroll-mt-24 p-4 sm:p-5">
               <h2 id="location-title" className="mb-3 flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-slate-700">
                 <MapPin aria-hidden="true" size={16} /> Where are you?
               </h2>
@@ -344,7 +382,7 @@ export default function Dashboard({ startDemo = false }: { startDemo?: boolean }
                       </p>
                     )}
                     {!report && air.loading && (
-                      <div className="grid h-72 place-items-center rounded-3xl bg-gradient-to-br from-ink-950 to-ink-800 text-ink-200">
+                      <div className="card grid h-72 place-items-center text-slate-700">
                         <p>Loading air quality…</p>
                       </div>
                     )}
@@ -440,7 +478,7 @@ export default function Dashboard({ startDemo = false }: { startDemo?: boolean }
               </Section>
             </div>
 
-            <div id="sos" tabIndex={-1} className={`scroll-mt-24 rounded-3xl ${urgent ? "ring-4 ring-red-600 ring-offset-2 ring-offset-slate-50" : ""}`}>
+            <div id="sos" tabIndex={-1} className={`scroll-mt-24 rounded-3xl ${urgent ? "ring-4 ring-red-600 ring-offset-2 ring-offset-transparent" : ""}`}>
               <Section
                 id="sos-panel"
                 title="Emergency SOS"
@@ -547,7 +585,9 @@ export default function Dashboard({ startDemo = false }: { startDemo?: boolean }
             </Section>
           </div>
 
-          <footer className="mt-10 border-t border-slate-200 pt-6">
+          <InstallCard />
+
+          <footer className="mt-10 border-t border-slate-900/10 pt-6">
             <p className="text-sm text-slate-700">
               SaansSafe gives general air-quality guidance, not medical advice. It does not diagnose or prescribe. In an
               emergency call {AMBULANCE} or {EMERGENCY}, or your doctor. Air data: Open-Meteo (CAMS). Index: CPCB NAQI.
