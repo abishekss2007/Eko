@@ -172,6 +172,8 @@ On start the log shows `Accounts database: postgres`. The demo account is re-see
 * **Backend on Render:** `render.yaml` describes one free Docker web service in Singapore. Set `DATABASE_URL` (and optionally `GEMINI_API_KEY`) in Render's environment settings, and keep `ALLOWED_ORIGINS` set to the Vercel address so sign-in through the proxy passes the cross-site check.
 * **Database on Supabase:** the backend logs in as its own `saanssafe_app` role (owner of the three tables) through the session pooler.
 
+**Browser relay for weather data.** Open-Meteo and Photon limit requests per IP address, and Render's shared address is often over that limit (HTTP 429). When a provider refuses the server, the API answers with the exact provider requests it needs; the visitor's browser makes them (allowed by the CSP), posts the JSON to `/api/relay`, and retries with a private `X-Relay-Id`. The server still does every calculation, keeps relayed data only for that visitor for 15 minutes, and never puts it in the shared caches, so nobody can feed false readings to other visitors. After a 429 the server stops asking that provider for 5 minutes. On a machine with its own address (your laptop) none of this kicks in.
+
 Free Render instances sleep after 15 minutes idle and take about a minute to wake, so the first request after a quiet spell is slow.
 
 ## Phone app

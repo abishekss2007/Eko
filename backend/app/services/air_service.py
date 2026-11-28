@@ -15,7 +15,7 @@ from app.engines.climate import detect_inversion
 from app.engines.weather import DAYS_AHEAD, build_outlook
 from app.engines.window import find_best_window, upcoming
 from app.schemas.air import AirReport, CurrentConditions, GeocodeResult, HourlyPoint, Location
-from app.services import places
+from app.services import places, relay
 from app.services.cache import TTLCache
 
 logger = logging.getLogger(__name__)
@@ -166,7 +166,20 @@ async def fetch_json(
     """GET a JSON object from a provider; any failure becomes an UpstreamError.
 
     `timeout_s` overrides the client's timeout for slow providers such as the weather archive.
+    When the provider refuses this server, the request is noted so the visitor's browser can
+    make it instead (see `relay.py`); a request answered from the browser's data skips the network.
     """
+    ctx, relay_hub = relay.current(), relay.hub()
+    wanted = relay.ProviderRequest.of(url, params)
+    if ctx is not None and ctx.provided is not None:
+        data = ctx.provided.get(wanted.key)
+        if data is not None:
+            return data
+        ctx.needed.append(wanted)
+        raise UpstreamError("Air-quality provider is unavailable")
+    if ctx is not None and relay_hub is not None and relay_hub.blocked(url):
+        ctx.needed.append(wanted)
+        raise UpstreamError("Air-quality provider is unavailable")
     try:
         if timeout_s is None:
             response = await client.get(url, params=params)
@@ -177,6 +190,10 @@ async def fetch_json(
     except (httpx.HTTPError, ValueError) as exc:
         status_code = exc.response.status_code if isinstance(exc, httpx.HTTPStatusError) else None
         logger.warning("Upstream request failed: %s (HTTP %s) for %s", type(exc).__name__, status_code, url)
+        if status_code in (403, 429) and relay_hub is not None:
+            relay_hub.block(url)
+        if ctx is not None and url in relay.RELAY_URLS:
+            ctx.needed.append(wanted)
         raise UpstreamError("Air-quality provider is unavailable") from exc
     if not isinstance(data, dict):
         raise UpstreamError("Unexpected provider response")
@@ -228,7 +245,8 @@ class AirService:
                 ),
             )
             cached = (air, weather)
-            self._raw_cache.set((lat, lon), cached)
+            if not relay.is_active():
+                self._raw_cache.set((lat, lon), cached)
         return build_report(*cached, now)
 
     async def geocode(self, query: str) -> list[GeocodeResult]:
@@ -238,7 +256,7 @@ class AirService:
         still works if one of them is down, and fails only if both are.
         """
         key = " ".join(query.casefold().split())
-        hit = self._geo_cache.get(key)
+        hit = None if relay.is_active() else self._geo_cache.get(key)
         if hit is not None:
             return hit
         head, qualifiers = places.split_query(query)
@@ -257,5 +275,6 @@ class AirService:
             results = places.merge(matching, photon, rest)
         else:
             results = places.merge(open_meteo, photon)
-        self._geo_cache.set(key, results)
+        if not relay.is_active():
+            self._geo_cache.set(key, results)
         return results

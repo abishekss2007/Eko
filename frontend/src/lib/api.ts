@@ -16,6 +16,10 @@ import type {
   ShieldRequest,
   ShieldResponse,
 } from "../types";
+import { type ProviderRequest, RELAY_WANTED_HEADER, parseRequests, relay, relayHeaders } from "./relay";
+
+/** A provider may need a second round (place search first, then air for it). */
+const MAX_RELAY_ROUNDS = 2;
 
 export class ApiError extends Error {
   constructor(
@@ -39,12 +43,39 @@ async function errorMessage(response: Response): Promise<string> {
   return typeof detail === "string" ? detail : "The request could not be processed.";
 }
 
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+/** Provider requests the API asks this browser to make (see lib/relay.ts), if any. */
+async function relayRequests(response: Response): Promise<ProviderRequest[]> {
+  if (response.status !== 502) return [];
+  const body = await response
+    .clone()
+    .json()
+    .catch(() => undefined);
+  return parseRequests((body as { relay?: unknown } | undefined)?.relay);
+}
+
+async function request<T>(path: string, init: RequestInit = {}, attempt = 0): Promise<T> {
   const response = await fetch(path, {
     ...init,
-    headers: { Accept: "application/json", ...(init.body ? { "Content-Type": "application/json" } : {}) },
+    headers: {
+      Accept: "application/json",
+      ...(init.body ? { "Content-Type": "application/json" } : {}),
+      ...relayHeaders(),
+    },
   });
+  // Slow, optional data (the long-term archive): fetch it in the background for the next poll.
+  const wanted = response.headers.get(RELAY_WANTED_HEADER);
+  if (wanted) {
+    try {
+      void relay(parseRequests(JSON.parse(wanted))).catch(() => undefined);
+    } catch {
+      /* ignore a malformed header */
+    }
+  }
   if (!response.ok) {
+    const needed = attempt < MAX_RELAY_ROUNDS ? await relayRequests(response) : [];
+    if (needed.length > 0 && (await relay(needed, init.signal ?? undefined).catch(() => false))) {
+      return request<T>(path, init, attempt + 1);
+    }
     throw new ApiError(await errorMessage(response), response.status);
   }
   return (await response.json()) as T;
