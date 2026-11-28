@@ -14,6 +14,7 @@ from app.data import Pollutant
 from app.engines.history import day_hours, long_term_records, period_records, summarize_days
 from app.schemas.air import Location
 from app.schemas.history import DayDetail, DaySummary, HistoryReport, LongTermRecords
+from app.services import relay
 from app.services.air_service import AIR_URL, WEATHER_URL, UpstreamError, fetch_json
 from app.services.cache import TTLCache
 
@@ -240,15 +241,36 @@ class HistoryService:
         if isinstance(weather, BaseException):
             raise UpstreamError("Weather history is unavailable") from weather
         result = (weather, None if isinstance(air, BaseException) else air)
-        if result[1] is not None:
+        if result[1] is not None and not relay.is_active():
             self._recent.set(key, result)
         return result
+
+    def _archive_params(self, key: tuple[float, float]) -> Params:
+        lat, lon = key
+        end = self._clock().date() - timedelta(days=ARCHIVE_LAG_DAYS)
+        return {
+            "latitude": lat,
+            "longitude": lon,
+            "timezone": "auto",
+            "start_date": ARCHIVE_START.isoformat(),
+            "end_date": end.isoformat(),
+            "daily": "temperature_2m_max,temperature_2m_min",
+        }
 
     def _archive_or_start(self, key: tuple[float, float]) -> tuple[Json | None, bool]:
         """The cached archive, or start loading it in the background. Returns (archive, pending)."""
         cached = self._archive.get(key)
         if cached is not None:
             return cached, False
+        ctx, relay_hub = relay.current(), relay.hub()
+        if ctx is not None and (ctx.active or (relay_hub is not None and relay_hub.blocked(ARCHIVE_URL))):
+            # The browser fetches the slow archive in the background and the History tab polls.
+            wanted = relay.ProviderRequest.of(ARCHIVE_URL, self._archive_params(key))
+            provided = (ctx.provided or {}).get(wanted.key)
+            if provided is not None:
+                return provided, False
+            ctx.wanted.append(wanted)
+            return None, True
         if key in self._archive_loads:
             return None, True
         if self._archive_failed.get(key) or len(self._archive_loads) >= self.MAX_ARCHIVE_LOADS:
@@ -257,16 +279,7 @@ class HistoryService:
         return None, True
 
     async def _load_archive(self, key: tuple[float, float]) -> None:
-        lat, lon = key
-        end = self._clock().date() - timedelta(days=ARCHIVE_LAG_DAYS)
-        params: Params = {
-            "latitude": lat,
-            "longitude": lon,
-            "timezone": "auto",
-            "start_date": ARCHIVE_START.isoformat(),
-            "end_date": end.isoformat(),
-            "daily": "temperature_2m_max,temperature_2m_min",
-        }
+        params = self._archive_params(key)
         try:
             data = await fetch_json(self._client, ARCHIVE_URL, params, timeout_s=self._archive_timeout_s)
         except UpstreamError:

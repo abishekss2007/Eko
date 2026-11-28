@@ -15,9 +15,9 @@ from starlette.responses import Response
 from starlette.types import Scope
 
 from app.config import Settings, get_settings
-from app.routers import air, auth, family, health, history, planner, shield
+from app.routers import air, auth, family, health, history, planner, relay, shield
 from app.schemas.auth import DemoAccount
-from app.security import BodySizeLimitMiddleware, SecurityHeadersMiddleware, limiter
+from app.security import BodySizeLimitMiddleware, RelayMiddleware, SecurityHeadersMiddleware, limiter
 from app.services.air_service import AirService, UpstreamError
 from app.services.auth_service import AuthService
 from app.services.database import open_database
@@ -26,6 +26,8 @@ from app.services.gemini_service import NarrativeModel, build_narrative_model
 from app.services.history_service import HistoryService
 from app.services.narrator import Narrator
 from app.services.planner_service import PlannerService
+from app.services.relay import RelayHub
+from app.services.relay import current as relay_context
 from app.services.shield_service import ShieldService
 
 logger = logging.getLogger("saanssafe")
@@ -107,12 +109,23 @@ def create_app(
 
     @app.exception_handler(UpstreamError)
     async def upstream_error(_: Request, exc: UpstreamError) -> JSONResponse:
-        return JSONResponse({"detail": str(exc)}, status_code=502)
+        ctx = relay_context()
+        body: dict[str, object] = {"detail": str(exc)}
+        if ctx is not None and ctx.needed:
+            # The browser can make these provider requests itself and retry (see relay.py).
+            body["relay"] = [item.to_json() for item in dict.fromkeys(ctx.needed)]
+        return JSONResponse(body, status_code=502)
 
-    app.add_middleware(BodySizeLimitMiddleware, max_bytes=settings.max_body_bytes)
+    app.state.relay_hub = RelayHub()
+    app.add_middleware(RelayMiddleware)
+    app.add_middleware(
+        BodySizeLimitMiddleware,
+        max_bytes=settings.max_body_bytes,
+        overrides={"/api/relay": settings.max_relay_bytes},
+    )
     app.add_middleware(SecurityHeadersMiddleware)
 
-    for module in (health, auth, air, history, shield, planner, family):
+    for module in (health, auth, air, history, shield, planner, family, relay):
         app.include_router(module.router)
 
     if settings.static_dir and settings.static_dir.is_dir():

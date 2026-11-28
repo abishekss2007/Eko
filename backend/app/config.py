@@ -37,6 +37,9 @@ class Settings(BaseSettings):
     ai_rate_limit: str = "20/minute"
     data_rate_limit: str = "60/minute"
     max_body_bytes: int = Field(default=16 * 1024, gt=0)
+    max_relay_bytes: int = Field(
+        default=3 * 1024 * 1024, gt=0, description="Cap for provider data a browser relays (the archive is large)."
+    )
 
     auth_rate_limit: str = "10/minute"
     database_url: SecretStr | None = Field(
