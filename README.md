@@ -16,7 +16,7 @@ Every winter, cold, still air traps smoke and dust over North Indian cities. NAQ
 
 | | Feature | What it does |
 |---|---|---|
-| F1 | **Live smog dashboard** | **Any place on Earth**: type-ahead search for cities, towns, villages, neighbourhoods and landmarks (Open-Meteo/GeoNames plus Photon/OpenStreetMap, merged and de-duplicated, add a state or country after a comma to narrow), 15 Indian quick picks, recent places, or geolocation. CPCB NAQI with colour + icon + text, PM2.5, PM10, temperature, wind and a **winter smog trap indicator** (temp < 15 °C, wind < 8 km/h, PM2.5 > 90 µg/m³). |
+| F1 | **Live smog dashboard** | City search, quick picks (Delhi, Ghaziabad, Noida, Lucknow, Kolkata, Mumbai) or geolocation. CPCB NAQI with colour + icon + text, PM2.5, PM10, temperature, wind and a **winter smog trap indicator** (temp < 15 °C, wind < 8 km/h, PM2.5 > 90 µg/m³). |
 | F1 | **Simulate severe winter smog** | One switch loads a fixed scenario (NAQI 418, 9 °C, 3 km/h) so alerts and SOS can be tested on any day, with no network call. |
 | F2 | **Best outdoor window** | Scans the next 24 h (06:00–21:00) for the cleanest contiguous 2-hour slot. Bar chart plus an accessible data table. |
 | F3 | **Family Health Shield** | Household members (age group, conditions, doctor's care note) stored only in the browser. Per-member risk tier, browser notification + `role="alert"` banner at High and above, personal stay-safe checklist and a safe care-plan reminder. |
