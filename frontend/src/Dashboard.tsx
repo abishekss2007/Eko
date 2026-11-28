@@ -283,7 +283,7 @@ export default function Dashboard({ startDemo = false }: { startDemo?: boolean }
 
       <div className="lg:pl-64">
         <header id="top" className="safe-top sticky top-0 z-20 border-b border-slate-900/10 bg-slate-50/60 backdrop-blur-xl">
-          <div className="mx-auto flex max-w-6xl items-center gap-2 px-3 py-2.5 sm:px-4">
+          <div className="mx-auto flex max-w-6xl items-center gap-2 px-3 py-2.5 sm:px-4 2xl:max-w-[1480px]">
             <Link href="/" className="flex items-center gap-2 text-lg font-black text-slate-950 lg:hidden" aria-label="SaansSafe home">
               <span aria-hidden="true" className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-iris-light to-iris text-snow">
                 <Wind size={18} />
@@ -333,7 +333,7 @@ export default function Dashboard({ startDemo = false }: { startDemo?: boolean }
           </div>
         </header>
 
-        <main id="main" tabIndex={-1} className={`mx-auto max-w-6xl px-4 pb-36 pt-4 lg:pb-12 lg:pt-6 ${demo.active ? "!pb-60" : ""}`}>
+        <main id="main" tabIndex={-1} className={`mx-auto max-w-6xl px-4 pb-36 pt-4 lg:px-6 lg:pb-12 lg:pt-6 2xl:max-w-[1480px] ${demo.active ? "!pb-60" : ""}`}>
           <h1 className="sr-only">SaansSafe family smog dashboard</h1>
 
           <div
@@ -346,24 +346,37 @@ export default function Dashboard({ startDemo = false }: { startDemo?: boolean }
             aria-label="Today"
             className="view-enter space-y-5"
           >
+            {/* Phones: hero, forecast and place search stacked. PC: the hero on the left, forecast and search beside it. */}
+            <div className="grid gap-5 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:items-start">
             {!pickedDay && (
-              <div className="mx-auto max-w-2xl space-y-4">
-                <WeatherHero
-                  report={report}
-                  placeName={place.name}
-                  loading={air.loading}
-                  onChangePlace={() => openView("today", "place-card")}
-                />
-                {report && <ForecastSheet report={report} />}
-              </div>
+              <>
+                <div className="mx-auto w-full max-w-2xl lg:card lg:sticky lg:top-24 lg:row-span-2 lg:max-w-none lg:overflow-hidden lg:px-6 lg:pb-6">
+                  <WeatherHero
+                    report={report}
+                    placeName={place.name}
+                    loading={air.loading}
+                    onChangePlace={() => openView("today", "place-card")}
+                  />
+                </div>
+                {report && (
+                  <div className="mx-auto w-full min-w-0 max-w-2xl lg:max-w-none">
+                    <ForecastSheet report={report} />
+                  </div>
+                )}
+              </>
             )}
 
-            <section id="place-card" aria-labelledby="location-title" className="card scroll-mt-24 p-4 sm:p-5">
+            <section
+              id="place-card"
+              aria-labelledby="location-title"
+              className={`card scroll-mt-24 p-4 sm:p-5 ${pickedDay ? "lg:col-span-2" : "lg:col-start-2"}`}
+            >
               <h2 id="location-title" className="mb-3 flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-slate-700">
                 <MapPin aria-hidden="true" size={16} /> Where are you?
               </h2>
               <LocationBar place={place} onPlace={setPlace} simulate={simulate} onSimulate={setSimulate} />
             </section>
+            </div>
 
             <DateStrip place={place} report={report} selected={pickedDay} onSelect={pickDay} />
 
