@@ -132,6 +132,20 @@ def simulated_payloads(latitude: float, longitude: float, utc_now: datetime) -> 
     return air, weather
 
 
+async def fetch_json(client: httpx.AsyncClient, url: str, params: dict[str, str | int | float]) -> Json:
+    """GET a JSON object from a provider; any failure becomes an UpstreamError."""
+    try:
+        response = await client.get(url, params=params)
+        response.raise_for_status()
+        data = response.json()
+    except (httpx.HTTPError, ValueError) as exc:
+        logger.warning("Upstream request failed: %s", type(exc).__name__)
+        raise UpstreamError("Air-quality provider is unavailable") from exc
+    if not isinstance(data, dict):
+        raise UpstreamError("Unexpected provider response")
+    return data
+
+
 class AirService:
     """Async Open-Meteo client with rounded-coordinate TTL caching."""
 
@@ -147,16 +161,7 @@ class AirService:
         self._geo_cache: TTLCache[str, list[GeocodeResult]] = TTLCache(settings.geocode_cache_ttl_s)
 
     async def _get_json(self, url: str, params: dict[str, str | int | float]) -> Json:
-        try:
-            response = await self._client.get(url, params=params)
-            response.raise_for_status()
-            data = response.json()
-        except (httpx.HTTPError, ValueError) as exc:
-            logger.warning("Upstream request failed: %s", type(exc).__name__)
-            raise UpstreamError("Air-quality provider is unavailable") from exc
-        if not isinstance(data, dict):
-            raise UpstreamError("Unexpected provider response")
-        return data
+        return await fetch_json(self._client, url, params)
 
     async def report(self, latitude: float, longitude: float, *, simulate: bool = False) -> AirReport:
         """Live report (cached ~20 min per km-square) or the simulated scenario."""

@@ -258,3 +258,70 @@ export interface CivicResponse {
   draft: { subject: string; body: string };
   narrative_source: NarrativeSource;
 }
+
+export interface DaySummary {
+  date: string;
+  temp_max_c: number | null;
+  temp_max_time: string | null;
+  temp_min_c: number | null;
+  temp_min_time: string | null;
+  precipitation_mm: number | null;
+  wind_max_kmh: number | null;
+  humidity_mean: number | null;
+  pm2_5_mean: number | null;
+  pm2_5_peak: number | null;
+  naqi: number | null;
+  naqi_category: string | null;
+  naqi_color: string | null;
+}
+
+export interface PeriodRecord {
+  value: number;
+  date: string;
+  time: string | null;
+  category: string | null;
+}
+
+export interface PeriodRecords {
+  hottest: PeriodRecord | null;
+  coldest: PeriodRecord | null;
+  wettest: PeriodRecord | null;
+  windiest: PeriodRecord | null;
+  worst_air: PeriodRecord | null;
+  cleanest_air: PeriodRecord | null;
+  pm2_5_peak: PeriodRecord | null;
+  average_naqi: number | null;
+  days_poor_or_worse: number;
+}
+
+export interface YearRecord {
+  value: number;
+  date: string;
+}
+
+export interface LongTermRecords {
+  since: string;
+  until: string;
+  hottest_day: YearRecord | null;
+  coldest_day: YearRecord | null;
+  today: {
+    month: number;
+    day: number;
+    record_high: YearRecord | null;
+    record_low: YearRecord | null;
+    average_high_c: number | null;
+    years: number;
+  } | null;
+  yesterday_vs_average_c: number | null;
+}
+
+export interface HistoryReport {
+  location: { latitude: number; longitude: number; timezone: string | null };
+  days: number;
+  yesterday: DaySummary | null;
+  daily: DaySummary[];
+  records: PeriodRecords;
+  long_term: LongTermRecords | null;
+  air_available: boolean;
+  sources: string[];
+}

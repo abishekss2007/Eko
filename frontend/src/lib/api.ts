@@ -6,6 +6,7 @@ import type {
   CommuteResponse,
   DemoShieldRequest,
   GeocodeResult,
+  HistoryReport,
   HouseholdDto,
   IndoorRequest,
   IndoorResponse,
@@ -51,6 +52,11 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 export function fetchAir(lat: number, lon: number, simulate: boolean, signal?: AbortSignal): Promise<AirReport> {
   const params = new URLSearchParams({ lat: lat.toFixed(4), lon: lon.toFixed(4), simulate: String(simulate) });
   return request<AirReport>(`/api/air?${params}`, { signal });
+}
+
+export function fetchHistory(lat: number, lon: number, days: number, signal?: AbortSignal): Promise<HistoryReport> {
+  const params = new URLSearchParams({ lat: lat.toFixed(4), lon: lon.toFixed(4), days: String(days) });
+  return request<HistoryReport>(`/api/history?${params}`, { signal });
 }
 
 export function searchPlaces(query: string, signal?: AbortSignal): Promise<GeocodeResult[]> {
