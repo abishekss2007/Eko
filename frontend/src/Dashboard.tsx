@@ -241,7 +241,7 @@ export default function Dashboard({ startDemo = false }: { startDemo?: boolean }
 
       <nav
         aria-label="App sections"
-        className="tabbar safe-bottom fixed inset-x-0 bottom-0 z-30 border-t lg:inset-y-0 lg:left-0 lg:right-auto lg:flex lg:w-64 lg:flex-col lg:border-r lg:border-t-0 lg:px-4 lg:py-6"
+        className="tabbar nav-float fixed inset-x-3 z-30 mx-auto max-w-xl rounded-[30px] border lg:inset-y-4 lg:left-4 lg:right-auto lg:mx-0 lg:flex lg:w-64 lg:max-w-none lg:flex-col lg:overflow-y-auto lg:rounded-[28px] lg:px-4 lg:py-6"
       >
         <Link href="/" className="mb-8 hidden items-center gap-2 px-3 text-xl font-black text-slate-950 lg:flex" aria-label="SaansSafe home">
           <span aria-hidden="true" className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-iris-light to-iris text-snow">
@@ -249,12 +249,7 @@ export default function Dashboard({ startDemo = false }: { startDemo?: boolean }
           </span>
           SaansSafe
         </Link>
-        {/* The raised middle of the bar on phones, behind the round button. */}
-        <span
-          aria-hidden="true"
-          className="tabbar pointer-events-none absolute -top-4 left-1/2 h-[calc(100%+1rem)] w-44 -translate-x-1/2 rounded-t-[50%] border-t lg:hidden"
-        />
-        <ul className="relative mx-auto grid max-w-xl grid-cols-7 items-end px-1 lg:mx-0 lg:max-w-none lg:grid-cols-1 lg:gap-1 lg:px-0">
+        <ul className="relative mx-auto grid max-w-xl grid-cols-7 items-end px-1 pb-1 lg:pb-0 lg:mx-0 lg:max-w-none lg:grid-cols-1 lg:gap-1 lg:px-0">
           {VIEWS.map(({ id, label, Icon }, i) => {
             const active = view === id;
             return [
@@ -263,7 +258,7 @@ export default function Dashboard({ startDemo = false }: { startDemo?: boolean }
                   <button
                     type="button"
                     onClick={findPlace}
-                    className="-mt-7 mb-2 grid h-16 w-16 place-items-center rounded-full bg-gradient-to-br from-[#f5f5f9] to-[#dadfe7] text-iris shadow-[0_8px_20px_rgba(0,0,0,0.35),inset_0_2px_0_rgba(255,255,255,0.9)] ring-[3px] ring-white/40 transition active:scale-95"
+                    className="float-bob -mt-8 mb-2 grid h-16 w-16 place-items-center rounded-full bg-gradient-to-br from-[#f5f5f9] to-[#dadfe7] text-iris shadow-[0_8px_20px_rgba(0,0,0,0.35),inset_0_2px_0_rgba(255,255,255,0.9)] ring-[3px] ring-white/40 transition active:scale-95"
                   >
                     <Plus aria-hidden="true" size={30} strokeWidth={2.5} />
                     <span className="sr-only">Find a place</span>
@@ -275,12 +270,12 @@ export default function Dashboard({ startDemo = false }: { startDemo?: boolean }
                   type="button"
                   aria-current={active ? "page" : undefined}
                   onClick={() => openView(id)}
-                  className={`group flex min-h-[60px] w-full flex-col items-center justify-center gap-0.5 text-[11px] font-semibold transition lg:min-h-[44px] lg:flex-row lg:justify-start lg:gap-3 lg:rounded-xl lg:px-3 lg:text-base ${
-                    active ? "text-slate-950 lg:bg-iris/30" : "text-slate-600 hover:text-slate-950 lg:hover:bg-slate-900/10"
+                  className={`group flex min-h-[60px] w-full flex-col items-center justify-center gap-0.5 text-[11px] font-semibold transition duration-200 ease-out lg:min-h-[44px] lg:flex-row lg:justify-start lg:gap-3 lg:rounded-xl lg:px-3 lg:text-base lg:hover:translate-x-1 ${
+                    active ? "text-slate-950 lg:bg-iris/30 lg:shadow-md lg:shadow-black/10" : "text-slate-600 hover:text-slate-950 lg:hover:bg-slate-900/10"
                   }`}
                 >
                   <span
-                    className={`grid h-8 w-10 place-items-center rounded-full transition lg:h-auto lg:w-auto ${active ? "bg-iris text-snow lg:bg-transparent lg:text-current" : ""}`}
+                    className={`grid h-8 w-10 place-items-center rounded-full transition duration-200 ease-out group-hover:-translate-y-0.5 lg:h-auto lg:w-auto lg:group-hover:translate-y-0 ${active ? "-translate-y-1 bg-iris text-snow shadow-lg shadow-iris/50 lg:translate-y-0 lg:bg-transparent lg:text-current lg:shadow-none" : ""}`}
                   >
                     <Icon aria-hidden="true" size={20} />
                   </span>
@@ -297,7 +292,7 @@ export default function Dashboard({ startDemo = false }: { startDemo?: boolean }
         </div>
       </nav>
 
-      <div className="lg:pl-64">
+      <div className="lg:pl-[18rem]">
         <header id="top" className="safe-top sticky top-0 z-20 border-b border-slate-900/10 bg-slate-50/60 backdrop-blur-xl">
           <div className="mx-auto flex max-w-6xl items-center gap-2 px-3 py-2.5 sm:px-4 2xl:max-w-[1480px]">
             <Link
