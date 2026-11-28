@@ -1,14 +1,14 @@
-"""Per-account household storage in the accounts database."""
+"""Per-account household storage in the accounts database (Postgres or SQLite)."""
 
 import json
 import logging
-import sqlite3
 import time
 
 from pydantic import ValidationError
 
 from app.schemas.family import FamilyMember, Household
 from app.services.auth_service import AuthService
+from app.services.database import Connection
 
 logger = logging.getLogger("saanssafe.family")
 
@@ -44,7 +44,7 @@ class FamilyService:
         self._auth = auth
 
     async def get(self, user_id: int) -> Household:
-        def read(db: sqlite3.Connection) -> str | None:
+        def read(db: Connection) -> str | None:
             row = db.execute("SELECT data FROM households WHERE user_id = ?", (user_id,)).fetchone()
             return row[0] if row else None
 
@@ -60,10 +60,10 @@ class FamilyService:
     async def save(self, user_id: int, household: Household) -> Household:
         data = json.dumps(household.model_dump(), separators=(",", ":"))
 
-        def write(db: sqlite3.Connection) -> None:
+        def write(db: Connection) -> None:
             db.execute(
                 "INSERT INTO households (user_id, data, updated_at) VALUES (?, ?, ?) "
-                "ON CONFLICT(user_id) DO UPDATE SET data = excluded.data, updated_at = excluded.updated_at",
+                "ON CONFLICT (user_id) DO UPDATE SET data = excluded.data, updated_at = excluded.updated_at",
                 (user_id, data, int(time.time())),
             )
 

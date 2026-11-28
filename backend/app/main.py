@@ -20,6 +20,7 @@ from app.schemas.auth import DemoAccount
 from app.security import BodySizeLimitMiddleware, SecurityHeadersMiddleware, limiter
 from app.services.air_service import AirService, UpstreamError
 from app.services.auth_service import AuthService
+from app.services.database import open_database
 from app.services.family_service import FamilyService
 from app.services.gemini_service import NarrativeModel, build_narrative_model
 from app.services.history_service import HistoryService
@@ -72,7 +73,10 @@ def create_app(
         app.state.shield_service = ShieldService(air_service, narrator)
         app.state.planner_service = PlannerService(air_service, narrator)
         app.state.ai_enabled = narrator.enabled
-        app.state.auth_service = AuthService(settings.database_path, settings.session_days)
+        database_url = settings.database_url.get_secret_value() if settings.database_url else None
+        database = await open_database(database_url, settings.database_path)
+        logger.info("Accounts database: %s", database.engine)
+        app.state.auth_service = AuthService(database, settings.session_days)
         app.state.family_service = FamilyService(app.state.auth_service)
         app.state.demo_account = None
         if settings.demo_account:

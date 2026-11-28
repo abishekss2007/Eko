@@ -1,5 +1,6 @@
 """Test helpers: mock Open-Meteo transport, fake Gemini model, in-process API client."""
 
+import os
 from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
@@ -115,6 +116,7 @@ def make_settings(**overrides: Any) -> Settings:
         "ai_rate_limit": "1000/minute",
         "data_rate_limit": "1000/minute",
         "auth_rate_limit": "1000/minute",
+        "database_url": os.environ.get("TEST_DATABASE_URL") or None,
         "database_path": Path(":memory:"),
         "cookie_secure": False,
         "demo_account": False,
