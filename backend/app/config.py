@@ -24,6 +24,12 @@ class Settings(BaseSettings):
     geocode_cache_ttl_s: int = Field(default=24 * 60 * 60, ge=0)
     history_cache_ttl_s: int = Field(default=60 * 60, ge=0)
     archive_cache_ttl_s: int = Field(default=24 * 60 * 60, ge=0)
+    archive_timeout_s: float = Field(
+        default=120.0, gt=0, le=600, description="The 1991-today archive can take a minute; it loads in the background."
+    )
+    archive_retry_s: int = Field(
+        default=10 * 60, ge=0, description="Wait this long before retrying a failed archive load."
+    )
     ai_cache_ttl_s: int = Field(default=15 * 60, ge=0)
     upstream_timeout_s: float = Field(default=8.0, gt=0, le=30)
 

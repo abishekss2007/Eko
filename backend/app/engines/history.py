@@ -13,6 +13,7 @@ from app.engines.aqi import compute_naqi
 from app.schemas.history import (
     CalendarDayRecord,
     DaySummary,
+    HourPoint,
     LongTermRecords,
     PeriodRecord,
     PeriodRecords,
@@ -186,3 +187,32 @@ def long_term_records(
         today=calendar if calendar.years else None,
         yesterday_vs_average_c=anomaly,
     )
+
+
+def day_hours(
+    day: date,
+    *,
+    weather_times: Sequence[datetime],
+    weather: Mapping[str, Series],
+    air_times: Sequence[datetime],
+    pm25: Series,
+) -> list[HourPoint]:
+    """Every hour of one local day, weather and PM2.5 side by side, oldest first."""
+
+    def on_day(times: Sequence[datetime], values: Series) -> dict[datetime, float | None]:
+        return {t: v for t, v in zip(times, values, strict=False) if t.date() == day}
+
+    temp = on_day(weather_times, weather.get("temperature", []))
+    rain = on_day(weather_times, weather.get("precipitation", []))
+    wind = on_day(weather_times, weather.get("wind", []))
+    pm = on_day(air_times, pm25)
+    return [
+        HourPoint(
+            time=t,
+            temperature_c=temp.get(t),
+            precipitation_mm=rain.get(t),
+            wind_kmh=wind.get(t),
+            pm2_5=pm.get(t),
+        )
+        for t in sorted(set(temp) | set(pm))
+    ]

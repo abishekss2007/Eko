@@ -81,6 +81,26 @@ class HistoryReport(BaseModel):
     yesterday: DaySummary | None
     daily: list[DaySummary] = Field(description="Completed days, oldest first. Today is excluded.")
     records: PeriodRecords
-    long_term: LongTermRecords | None = Field(description="None if the archive could not be reached.")
+    long_term: LongTermRecords | None = Field(description="None while loading or if the archive could not be reached.")
+    long_term_pending: bool = Field(
+        default=False, description="The archive is still loading in the background; ask again in a few seconds."
+    )
     air_available: bool
+    sources: list[str]
+
+
+class HourPoint(BaseModel):
+    time: datetime = Field(description="Local time.")
+    temperature_c: float | None
+    precipitation_mm: float | None
+    wind_kmh: float | None
+    pm2_5: float | None = Field(description="ug/m3")
+
+
+class DayDetail(BaseModel):
+    """One past local day: its summary and every hour, for the date picker on the home page."""
+
+    location: Location
+    summary: DaySummary
+    hours: list[HourPoint]
     sources: list[str]

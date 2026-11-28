@@ -1,17 +1,26 @@
 """Weather and air history: the engine, the payload builder, the service and the endpoint."""
 
+import asyncio
 from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
 import httpx
+import pytest
 
 from app.engines.history import long_term_records, period_records, summarize_days
-from app.services.history_service import ARCHIVE_URL, HistoryService, build_history
+from app.services import history_service
+from app.services.history_service import ARCHIVE_URL, HistoryService, build_day, build_history
 from tests.helpers import IST, api_client, make_settings
 
 # 10:00 IST on 28 Nov 2026.
 NOW = datetime(2026, 11, 28, 4, 30, tzinfo=UTC)
 TODAY = date(2026, 11, 28)
+
+
+@pytest.fixture(autouse=True)
+def pinned_clock(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The fixtures are fixed dates, so "today" is pinned for the endpoint tests too."""
+    monkeypatch.setattr(history_service, "utc_now", lambda: NOW)
 
 
 def hourly_times(days: int) -> list[datetime]:
@@ -196,24 +205,74 @@ async def test_service_caches_and_survives_archive_outage() -> None:
     async with httpx.AsyncClient(transport=transport(archive_ok=False, calls=calls)) as client:
         service = HistoryService(client, make_settings(), utc_clock=lambda: NOW)
         first = await service.report(28.6139, 77.209, 30)
-        await service.report(28.6141, 77.2091, 30)
+        await service.wait_for_archive()
+        second = await service.report(28.6141, 77.2091, 7)
     assert len(first.daily) == 30
+    assert len(second.daily) == 7
     assert first.long_term is None
+    assert first.long_term_pending is True, "the archive loads in the background, never on the request"
+    assert second.long_term_pending is False, "a failed archive is not retried at once"
     archive_calls = [c for c in calls if str(c.url).startswith(ARCHIVE_URL)]
-    assert len(calls) - len(archive_calls) == 2, "recent weather and air come from the cache the second time"
-    end = archive_calls[0].url.params["end_date"]
-    assert end == "2026-11-22"
+    assert len(archive_calls) == 1
+    assert len(calls) - len(archive_calls) == 2, "every period shares one cached 90-day fetch"
+    assert calls[0].url.params["past_days"] == "90"
+    assert archive_calls[0].url.params["end_date"] == "2026-11-22"
+
+
+async def test_archive_arrives_on_a_later_request() -> None:
+    async with httpx.AsyncClient(transport=transport()) as client:
+        service = HistoryService(client, make_settings(), utc_clock=lambda: NOW)
+        first = await service.report(28.61, 77.21, 7)
+        await service.wait_for_archive()
+        second = await service.report(28.61, 77.21, 7)
+        await service.aclose()
+    assert first.long_term is None
+    assert first.long_term_pending is True
+    assert second.long_term is not None
+    assert second.long_term_pending is False
 
 
 async def test_history_endpoint() -> None:
     async with api_client(transport=transport()) as client:
         response = await client.get("/api/history", params={"lat": 28.61, "lon": 77.21, "days": 7})
+        for _ in range(50):
+            later = await client.get("/api/history", params={"lat": 28.61, "lon": 77.21, "days": 7})
+            if not later.json()["long_term_pending"]:
+                break
+            await asyncio.sleep(0.01)
     assert response.status_code == 200
     data = response.json()
     assert data["days"] == 7
     assert len(data["daily"]) == 7
     assert data["records"]["hottest"]["value"] >= data["yesterday"]["temp_max_c"]
-    assert data["long_term"]["hottest_day"]["value"] == 47.2
+    assert data["long_term_pending"] is True
+    assert later.json()["long_term"]["hottest_day"]["value"] == 47.2
+
+
+async def test_history_day_endpoint() -> None:
+    async with api_client(transport=transport()) as client:
+        ok = await client.get("/api/history/day", params={"lat": 28.61, "lon": 77.21, "date": "2026-11-24"})
+        today = await client.get("/api/history/day", params={"lat": 28.61, "lon": 77.21, "date": "2026-11-28"})
+        too_old = await client.get("/api/history/day", params={"lat": 28.61, "lon": 77.21, "date": "2025-01-01"})
+        bad = await client.get("/api/history/day", params={"lat": 28.61, "lon": 77.21, "date": "yesterday"})
+    assert ok.status_code == 200
+    data = ok.json()
+    assert data["summary"]["date"] == "2026-11-24"
+    assert data["summary"]["naqi_category"] in {"Very Poor", "Severe"}
+    assert len(data["hours"]) == 24
+    assert data["hours"][8]["pm2_5"] == 400.0
+    assert data["hours"][15]["temperature_c"] == 28.5
+    assert today.status_code == 404
+    assert too_old.status_code == 404
+    assert bad.status_code == 422
+
+
+def test_build_day_without_air() -> None:
+    detail = build_day(weather_payload(), None, NOW, date(2026, 11, 25))
+    assert detail is not None
+    assert detail.summary.temp_max_c == 33.5
+    assert all(h.pm2_5 is None for h in detail.hours)
+    assert detail.sources == ["Open-Meteo weather (past days)"]
 
 
 async def test_history_endpoint_validates_days_and_reports_weather_outage() -> None:

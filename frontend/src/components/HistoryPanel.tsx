@@ -1,11 +1,14 @@
 import { CalendarDays, CloudRain, Droplets, Flame, History, Snowflake, Sparkles, Thermometer, Trophy, Wind } from "lucide-react";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useAsync } from "../hooks/useAsync";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 import { fetchHistory } from "../lib/api";
 import { dayLabel, fmt, hourLabel } from "../lib/format";
 import { bandStyle } from "../lib/naqi";
 import type { DaySummary, HistoryReport, PeriodRecord, Place } from "../types";
+
+const ARCHIVE_POLL_MS = 6000;
+const ARCHIVE_POLLS = 20;
 
 export const PERIODS = [7, 30, 90] as const;
 type Period = (typeof PERIODS)[number];
@@ -41,12 +44,21 @@ function Stat({ icon, label, children }: { icon: ReactNode; label: string; child
   );
 }
 
-function Yesterday({ day, placeName, anomaly }: { day: DaySummary; placeName: string; anomaly: number | null }) {
+/** One day's weather and air at a glance. Used for yesterday here and for any picked day on the home page. */
+export function DayCard({
+  day,
+  title,
+  anomaly = null,
+}: {
+  day: DaySummary;
+  title: string;
+  anomaly?: number | null;
+}) {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-lg font-bold text-slate-900">
-          Yesterday in {placeName} <span className="font-medium text-slate-700">({dayLabel(day.date)})</span>
+          {title} <span className="font-medium text-slate-700">({dayLabel(day.date)})</span>
         </h3>
         <NaqiBadge value={day.naqi} category={day.naqi_category} />
       </div>
@@ -288,9 +300,18 @@ function LongTerm({ report }: { report: HistoryReport }) {
 /** Past weather and air for the chosen place: yesterday, a 7/30/90-day trend, and records with dates. */
 export function HistoryPanel({ place }: { place: Place }) {
   const [period, setPeriod] = useLocalStorage<Period>("saanssafe.historyDays", parsePeriod, 30);
+  // The all-time records load in the background on the server; ask again until they arrive.
   const key = `${place.latitude},${place.longitude},${period}`;
-  const history = useAsync(key, (signal) => fetchHistory(place.latitude, place.longitude, period, signal));
+  const [poll, setPoll] = useState({ key, n: 0 });
+  const refresh = poll.key === key ? poll.n : 0;
+  const history = useAsync(`${key}#${refresh}`, (signal) => fetchHistory(place.latitude, place.longitude, period, signal));
   const report = history.data;
+  const pending = Boolean(report?.long_term_pending) && !history.loading;
+  useEffect(() => {
+    if (!pending || refresh >= ARCHIVE_POLLS) return;
+    const timer = window.setTimeout(() => setPoll({ key, n: refresh + 1 }), ARCHIVE_POLL_MS);
+    return () => window.clearTimeout(timer);
+  }, [pending, refresh, key]);
 
   return (
     <div className="space-y-6">
@@ -322,7 +343,7 @@ export function HistoryPanel({ place }: { place: Place }) {
         {report && (
           <>
             {report.yesterday ? (
-              <Yesterday day={report.yesterday} placeName={place.name} anomaly={report.long_term?.yesterday_vs_average_c ?? null} />
+              <DayCard day={report.yesterday} title={`Yesterday in ${place.name}`} anomaly={report.long_term?.yesterday_vs_average_c ?? null} />
             ) : (
               <p className="text-slate-700">Yesterday&apos;s readings are not available yet.</p>
             )}
@@ -349,6 +370,13 @@ export function HistoryPanel({ place }: { place: Place }) {
             )}
 
             <LongTerm report={report} />
+            {report.long_term_pending && (
+              <p role="status" className="rounded-2xl border border-dashed border-amber-400 p-4 text-amber-950">
+                {refresh >= ARCHIVE_POLLS
+                  ? "All-time records are taking longer than usual. Open this tab again in a minute."
+                  : "Loading all-time records since 1991… this can take up to a minute the first time for a place."}
+              </p>
+            )}
 
             <p className="text-xs text-slate-700">
               Times are local to {place.name}. Daily NAQI is the CPCB index of 24-hour averages and needs at least 16 hourly
