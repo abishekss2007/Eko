@@ -15,13 +15,14 @@ from starlette.responses import Response
 from starlette.types import Scope
 
 from app.config import Settings, get_settings
-from app.routers import air, auth, family, health, planner, shield
+from app.routers import air, auth, family, health, history, planner, shield
 from app.schemas.auth import DemoAccount
 from app.security import BodySizeLimitMiddleware, SecurityHeadersMiddleware, limiter
 from app.services.air_service import AirService, UpstreamError
 from app.services.auth_service import AuthService
 from app.services.family_service import FamilyService
 from app.services.gemini_service import NarrativeModel, build_narrative_model
+from app.services.history_service import HistoryService
 from app.services.narrator import Narrator
 from app.services.planner_service import PlannerService
 from app.services.shield_service import ShieldService
@@ -66,6 +67,7 @@ def create_app(
         air_service = AirService(client, settings)
         narrator = Narrator(model, settings)
         app.state.air_service = air_service
+        app.state.history_service = HistoryService(client, settings)
         app.state.shield_service = ShieldService(air_service, narrator)
         app.state.planner_service = PlannerService(air_service, narrator)
         app.state.ai_enabled = narrator.enabled
@@ -104,7 +106,7 @@ def create_app(
     app.add_middleware(BodySizeLimitMiddleware, max_bytes=settings.max_body_bytes)
     app.add_middleware(SecurityHeadersMiddleware)
 
-    for module in (health, auth, air, shield, planner, family):
+    for module in (health, auth, air, history, shield, planner, family):
         app.include_router(module.router)
 
     if settings.static_dir and settings.static_dir.is_dir():

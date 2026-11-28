@@ -1,4 +1,4 @@
-import { Clock, Home, Leaf, MapPin, PhoneCall, PlayCircle, ShieldCheck, Sparkles, TrainFront, Wind } from "lucide-react";
+import { Clock, History, Home, Leaf, MapPin, PhoneCall, PlayCircle, ShieldCheck, Sparkles, TrainFront, Wind } from "lucide-react";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { AirDashboard } from "./components/AirDashboard";
 import { BestWindowChart } from "./components/BestWindowChart";
@@ -7,6 +7,7 @@ import { CommutePlanner } from "./components/CommutePlanner";
 import { AccountMenu } from "./components/AccountMenu";
 import { DemoBar } from "./components/DemoBar";
 import { FamilySignInPrompt } from "./components/FamilySignInPrompt";
+import { HistoryPanel } from "./components/HistoryPanel";
 import { HouseholdEditor } from "./components/HouseholdEditor";
 import { ImpactTracker } from "./components/ImpactTracker";
 import { IndoorPlanner } from "./components/IndoorPlanner";
@@ -71,6 +72,7 @@ const VIEWS = [
   { id: "today", label: "Today", title: "Today", Icon: Sparkles },
   { id: "family", label: "Family", title: "Family & SOS", Icon: ShieldCheck },
   { id: "home", label: "Home air", title: "Clean air at home", Icon: Home },
+  { id: "history", label: "History", title: "Weather and air history", Icon: History },
   { id: "commute", label: "Commute", title: "Cleaner commute", Icon: TrainFront },
   { id: "impact", label: "Impact", title: "Your impact", Icon: Leaf },
 ] as const;
@@ -87,6 +89,8 @@ const VIEW_FOR: Record<string, View> = {
   home: "home",
   indoor: "home",
   commute: "commute",
+  history: "history",
+  records: "history",
   impact: "impact",
 };
 
@@ -215,7 +219,7 @@ export default function Dashboard({ startDemo = false }: { startDemo?: boolean }
           </span>
           SaansSafe
         </Link>
-        <ul className="mx-auto grid max-w-lg grid-cols-5 lg:mx-0 lg:max-w-none lg:grid-cols-1 lg:gap-1">
+        <ul className="mx-auto grid max-w-xl grid-cols-6 lg:mx-0 lg:max-w-none lg:grid-cols-1 lg:gap-1">
           {VIEWS.map(({ id, label, Icon }) => {
             const active = view === id;
             return (
@@ -463,6 +467,28 @@ export default function Dashboard({ startDemo = false }: { startDemo?: boolean }
               icon={<Home aria-hidden="true" />}
             >
               <IndoorPlanner context={context} />
+            </Section>
+          </div>
+
+          <div
+            hidden={view !== "history"}
+            ref={(el) => {
+              viewRefs.current.history = el;
+            }}
+            role="region"
+            tabIndex={-1}
+            aria-label="Weather and air history"
+            id="history"
+            className="view-enter"
+          >
+            <Section
+              id="history-panel"
+              title={`Weather and air history: ${place.name}`}
+              description="Yesterday's weather and air, the last few weeks day by day, and when the records were set."
+              icon={<History aria-hidden="true" />}
+            >
+              {/* Loaded only once the view is opened, so the dashboard's first load stays light. */}
+              {view === "history" && <HistoryPanel place={place} />}
             </Section>
           </div>
 

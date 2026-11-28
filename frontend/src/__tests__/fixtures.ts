@@ -1,4 +1,4 @@
-import type { AirReport, CivicResponse, CommuteResponse, IndoorResponse, PlanResponse, ShieldResponse } from "../types";
+import type { AirReport, CivicResponse, DaySummary, HistoryReport, CommuteResponse, IndoorResponse, PlanResponse, ShieldResponse } from "../types";
 
 export const AIR: AirReport = {
   location: { latitude: 28.61, longitude: 77.21, timezone: "Asia/Kolkata" },
@@ -148,6 +148,67 @@ export const CIVIC: CivicResponse = {
   narrative_source: "rules",
 };
 
+function day(date: string, high: number, low: number, naqi: number | null, category: string | null): DaySummary {
+  return {
+    date,
+    temp_max_c: high,
+    temp_max_time: `${date}T15:00`,
+    temp_min_c: low,
+    temp_min_time: `${date}T06:00`,
+    precipitation_mm: 0,
+    wind_max_kmh: 9,
+    humidity_mean: 62,
+    pm2_5_mean: naqi === null ? null : 120,
+    pm2_5_peak: naqi === null ? null : 210,
+    naqi,
+    naqi_category: category,
+    naqi_color: null,
+  };
+}
+
+export const HISTORY: HistoryReport = {
+  location: { latitude: 28.61, longitude: 77.21, timezone: "Asia/Kolkata" },
+  days: 7,
+  yesterday: day("2026-11-27", 26.4, 12.1, 312, "Very Poor"),
+  daily: [
+    day("2026-11-21", 25.0, 11.0, 250, "Poor"),
+    day("2026-11-22", 25.5, 11.5, 280, "Poor"),
+    day("2026-11-23", 24.0, 10.2, 180, "Moderate"),
+    day("2026-11-24", 29.8, 13.0, 405, "Severe"),
+    day("2026-11-25", 26.0, 12.0, 300, "Poor"),
+    day("2026-11-26", 25.2, 11.8, null, null),
+    day("2026-11-27", 26.4, 12.1, 312, "Very Poor"),
+  ],
+  records: {
+    hottest: { value: 29.8, date: "2026-11-24", time: "2026-11-24T15:00", category: null },
+    coldest: { value: 10.2, date: "2026-11-23", time: "2026-11-23T06:00", category: null },
+    wettest: null,
+    windiest: { value: 9, date: "2026-11-21", time: null, category: null },
+    worst_air: { value: 405, date: "2026-11-24", time: null, category: "Severe" },
+    cleanest_air: { value: 180, date: "2026-11-23", time: null, category: "Moderate" },
+    pm2_5_peak: { value: 210, date: "2026-11-21", time: "2026-11-21T08:00", category: null },
+    average_naqi: 288,
+    days_poor_or_worse: 5,
+  },
+  long_term: {
+    since: "1991-01-01",
+    until: "2026-11-22",
+    hottest_day: { value: 47.2, date: "2024-05-18" },
+    coldest_day: { value: 1.9, date: "2003-01-08" },
+    today: {
+      month: 11,
+      day: 28,
+      record_high: { value: 31.0, date: "2009-11-28" },
+      record_low: { value: 6.4, date: "1996-11-28" },
+      average_high_c: 25.1,
+      years: 35,
+    },
+    yesterday_vs_average_c: 1.3,
+  },
+  air_available: true,
+  sources: ["Open-Meteo weather (past days)", "Open-Meteo air quality (CAMS, past days)"],
+};
+
 const ROUTES: [string, unknown][] = [
   ["/api/shield", SHIELD],
   ["/api/plan", PLAN],
@@ -157,6 +218,7 @@ const ROUTES: [string, unknown][] = [
   ["/api/geocode", []],
   ["/api/family", { members: [], doctor_phone: "", hospital_phone: "" }],
   ["/api/auth/demo", { email: "demo@saanssafe.app", password: "SaansSafe-Demo-2026" }],
+  ["/api/history", HISTORY],
   ["/api/air", AIR],
 ];
 
