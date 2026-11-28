@@ -67,7 +67,8 @@ def create_app(
         air_service = AirService(client, settings)
         narrator = Narrator(model, settings)
         app.state.air_service = air_service
-        app.state.history_service = HistoryService(client, settings)
+        history_service = HistoryService(client, settings)
+        app.state.history_service = history_service
         app.state.shield_service = ShieldService(air_service, narrator)
         app.state.planner_service = PlannerService(air_service, narrator)
         app.state.ai_enabled = narrator.enabled
@@ -84,6 +85,7 @@ def create_app(
         try:
             yield
         finally:
+            await history_service.aclose()
             app.state.auth_service.close()
             if http_client is None:
                 await client.aclose()

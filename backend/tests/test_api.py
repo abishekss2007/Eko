@@ -74,7 +74,9 @@ async def test_air_report_live_and_cached() -> None:
     data = first.json()
     assert data["naqi"]["category"] == "Very Poor"
     assert data["inversion"]["detected"] is True
-    assert data["best_window"]["start"].endswith("15:00:00")
+    # The clean hours are 15:00-17:00 local; late in the afternoon the 24-hour lookahead ends
+    # at 16:00 tomorrow, so the best 2-hour window may start at 14:00 instead.
+    assert data["best_window"]["start"][11:16] in {"14:00", "15:00"}
     assert data["simulated"] is False
     assert len(calls) == 2, "second request must be served from the rounded-coordinate cache"
     assert second.json()["naqi"] == data["naqi"]

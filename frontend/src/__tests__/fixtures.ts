@@ -1,4 +1,4 @@
-import type { AirReport, CivicResponse, DaySummary, HistoryReport, CommuteResponse, IndoorResponse, PlanResponse, ShieldResponse } from "../types";
+import type { AirReport, CivicResponse, DayDetail, DaySummary, HistoryReport, CommuteResponse, IndoorResponse, PlanResponse, ShieldResponse } from "../types";
 
 export const AIR: AirReport = {
   location: { latitude: 28.61, longitude: 77.21, timezone: "Asia/Kolkata" },
@@ -205,8 +205,22 @@ export const HISTORY: HistoryReport = {
     },
     yesterday_vs_average_c: 1.3,
   },
+  long_term_pending: false,
   air_available: true,
   sources: ["Open-Meteo weather (past days)", "Open-Meteo air quality (CAMS, past days)"],
+};
+
+export const DAY: DayDetail = {
+  location: HISTORY.location,
+  summary: day("2026-11-24", 29.8, 13.0, 405, "Severe"),
+  hours: Array.from({ length: 24 }, (_, h) => ({
+    time: `2026-11-24T${String(h).padStart(2, "0")}:00`,
+    temperature_c: 13 + 16.8 * Math.max(0, 1 - Math.abs(h - 15) / 9),
+    precipitation_mm: 0,
+    wind_kmh: 5,
+    pm2_5: h === 8 ? 410 : 200,
+  })),
+  sources: HISTORY.sources,
 };
 
 const ROUTES: [string, unknown][] = [
@@ -218,6 +232,7 @@ const ROUTES: [string, unknown][] = [
   ["/api/geocode", []],
   ["/api/family", { members: [], doctor_phone: "", hospital_phone: "" }],
   ["/api/auth/demo", { email: "demo@saanssafe.app", password: "SaansSafe-Demo-2026" }],
+  ["/api/history/day", DAY],
   ["/api/history", HISTORY],
   ["/api/air", AIR],
 ];

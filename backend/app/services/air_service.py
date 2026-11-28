@@ -132,10 +132,18 @@ def simulated_payloads(latitude: float, longitude: float, utc_now: datetime) -> 
     return air, weather
 
 
-async def fetch_json(client: httpx.AsyncClient, url: str, params: dict[str, str | int | float]) -> Json:
-    """GET a JSON object from a provider; any failure becomes an UpstreamError."""
+async def fetch_json(
+    client: httpx.AsyncClient, url: str, params: dict[str, str | int | float], *, timeout_s: float | None = None
+) -> Json:
+    """GET a JSON object from a provider; any failure becomes an UpstreamError.
+
+    `timeout_s` overrides the client's timeout for slow providers such as the weather archive.
+    """
     try:
-        response = await client.get(url, params=params)
+        if timeout_s is None:
+            response = await client.get(url, params=params)
+        else:
+            response = await client.get(url, params=params, timeout=timeout_s)
         response.raise_for_status()
         data = response.json()
     except (httpx.HTTPError, ValueError) as exc:

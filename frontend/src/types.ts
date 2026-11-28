@@ -322,6 +322,22 @@ export interface HistoryReport {
   daily: DaySummary[];
   records: PeriodRecords;
   long_term: LongTermRecords | null;
+  long_term_pending: boolean;
   air_available: boolean;
+  sources: string[];
+}
+
+export interface HourPoint {
+  time: string;
+  temperature_c: number | null;
+  precipitation_mm: number | null;
+  wind_kmh: number | null;
+  pm2_5: number | null;
+}
+
+export interface DayDetail {
+  location: { latitude: number; longitude: number; timezone: string | null };
+  summary: DaySummary;
+  hours: HourPoint[];
   sources: string[];
 }

@@ -5,6 +5,7 @@ import { BestWindowChart } from "./components/BestWindowChart";
 import { CivicDrafter } from "./components/CivicDrafter";
 import { CommutePlanner } from "./components/CommutePlanner";
 import { AccountMenu } from "./components/AccountMenu";
+import { DateStrip, DayView } from "./components/DayPicker";
 import { DemoBar } from "./components/DemoBar";
 import { FamilySignInPrompt } from "./components/FamilySignInPrompt";
 import { HistoryPanel } from "./components/HistoryPanel";
@@ -129,6 +130,9 @@ export default function Dashboard({ startDemo = false }: { startDemo?: boolean }
   const [simulate, setSimulate] = useState(false);
   const [demoCommute, setDemoCommute] = useState(0);
   const [demoFamily, setDemoFamily] = useState(false);
+  // A past day picked on the home page; it belongs to one place, so a new place starts on today.
+  const placeKey = `${place.latitude},${place.longitude}`;
+  const [picked, setPicked] = useState<{ place: string; day: string | null }>({ place: placeKey, day: null });
 
   const household = demoFamily ? DEMO_HOUSEHOLD : family.household;
   const members = household.members;
@@ -199,6 +203,8 @@ export default function Dashboard({ startDemo = false }: { startDemo?: boolean }
     }, 0);
   };
   const current = VIEWS.find((v) => v.id === view) ?? VIEWS[0];
+  const pickedDay = picked.place === placeKey && !demo.active ? picked.day : null;
+  const pickDay = (day: string | null) => setPicked({ place: placeKey, day });
 
   const logCommute = (entry: { label: string; dose_ug: number; co2_kg: number }) =>
     setImpact((all) => [...all, { id: crypto.randomUUID(), date: today(), ...entry }]);
@@ -321,7 +327,11 @@ export default function Dashboard({ startDemo = false }: { startDemo?: boolean }
               <LocationBar place={place} onPlace={setPlace} simulate={simulate} onSimulate={setSimulate} />
             </section>
 
-            <div className="grid gap-6 xl:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
+            <DateStrip place={place} report={report} selected={pickedDay} onSelect={pickDay} />
+
+            {pickedDay && <DayView place={place} day={pickedDay} onBack={() => pickDay(null)} />}
+
+            <div hidden={pickedDay !== null} className={`${pickedDay ? "hidden" : "grid"} gap-6 xl:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]`}>
               <div id="air" className="scroll-mt-24">
                 <section aria-labelledby="air-now-title">
                   <h2 id="air-now-title" className="sr-only">

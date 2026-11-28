@@ -3,6 +3,7 @@
 import asyncio
 import logging
 from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
@@ -10,9 +11,9 @@ import httpx
 
 from app.config import Settings
 from app.data import Pollutant
-from app.engines.history import long_term_records, period_records, summarize_days
+from app.engines.history import day_hours, long_term_records, period_records, summarize_days
 from app.schemas.air import Location
-from app.schemas.history import HistoryReport, LongTermRecords
+from app.schemas.history import DayDetail, DaySummary, HistoryReport, LongTermRecords
 from app.services.air_service import AIR_URL, WEATHER_URL, UpstreamError, fetch_json
 from app.services.cache import TTLCache
 
@@ -34,6 +35,13 @@ _WEATHER_FIELDS = {
 _AIR_FIELDS: dict[Pollutant, str] = {"pm2_5": "pm2_5", "pm10": "pm10", "no2": "nitrogen_dioxide"}
 
 Json = dict[str, Any]
+
+
+def utc_now() -> datetime:
+    """The service clock; tests replace it to pin "today"."""
+    return datetime.now(UTC)
+
+
 Params = dict[str, str | int | float]
 
 
@@ -46,19 +54,33 @@ def _series(hourly: Json, field: str, length: int) -> list[float | None]:
     return list(values) if isinstance(values, list) and len(values) == length else [None] * length
 
 
-def build_history(
-    weather: Json,
-    air: Json | None,
-    archive: Json | None,
-    utc_now: datetime,
-    days: int,
-) -> HistoryReport:
-    """Turn raw Open-Meteo payloads into a history report. Pure function, easy to test."""
+@dataclass(frozen=True)
+class Recent:
+    """Parsed hourly weather and air for the past days, in the place's local time."""
+
+    offset_s: int
+    location: Location
+    weather_times: list[datetime]
+    weather: dict[str, list[float | None]]
+    air_times: list[datetime]
+    air: dict[Pollutant, list[float | None]]
+
+    def today(self, utc_now: datetime) -> date:
+        return (utc_now + timedelta(seconds=self.offset_s)).date()
+
+
+def parse_recent(weather: Json, air: Json | None) -> Recent:
+    """Weather must parse; unusable air data is dropped so the weather still shows."""
     try:
         offset = int(weather.get("utc_offset_seconds", 0))
         w_hourly = weather["hourly"]
         w_times = _times(w_hourly)
         w_series = {key: _series(w_hourly, field, len(w_times)) for key, field in _WEATHER_FIELDS.items()}
+        location = Location(
+            latitude=weather.get("latitude", 0.0),
+            longitude=weather.get("longitude", 0.0),
+            timezone=weather.get("timezone"),
+        )
     except (KeyError, TypeError, ValueError) as exc:
         raise UpstreamError("Unexpected weather history payload") from exc
 
@@ -72,13 +94,35 @@ def build_history(
         except (KeyError, TypeError, ValueError):
             logger.warning("Ignoring unusable air-quality history payload")
             a_times, a_series = [], {}
+    return Recent(offset, location, w_times, w_series, a_times, a_series)
 
-    today = (utc_now + timedelta(seconds=offset)).date()
-    daily = summarize_days(
-        weather_times=w_times, weather=w_series, air_times=a_times, air=a_series, today=today, days=days
+
+def _summaries(recent: Recent, today: date, days: int) -> list[DaySummary]:
+    return summarize_days(
+        weather_times=recent.weather_times,
+        weather=recent.weather,
+        air_times=recent.air_times,
+        air=recent.air,
+        today=today,
+        days=days,
     )
+
+
+def build_history(
+    weather: Json,
+    air: Json | None,
+    archive: Json | None,
+    utc_now: datetime,
+    days: int,
+    *,
+    archive_pending: bool = False,
+) -> HistoryReport:
+    """Turn raw Open-Meteo payloads into a history report. Pure function, easy to test."""
+    recent = parse_recent(weather, air)
+    today = recent.today(utc_now)
+    daily = _summaries(recent, today, days)
     yesterday = daily[-1] if daily and daily[-1].date == today - timedelta(days=1) else None
-    records = period_records(daily, pm25_times=a_times, pm25=a_series.get("pm2_5", []))
+    records = period_records(daily, pm25_times=recent.air_times, pm25=recent.air.get("pm2_5", []))
     long_term = _long_term(archive, today, yesterday.temp_max_c if yesterday else None)
     air_available = any(d.pm2_5_mean is not None for d in daily)
 
@@ -88,19 +132,36 @@ def build_history(
     if long_term:
         sources.append(ARCHIVE_SOURCE)
     return HistoryReport(
-        location=Location(
-            latitude=weather.get("latitude", 0.0),
-            longitude=weather.get("longitude", 0.0),
-            timezone=weather.get("timezone"),
-        ),
+        location=recent.location,
         days=days,
         yesterday=yesterday,
         daily=daily,
         records=records,
         long_term=long_term,
+        long_term_pending=archive_pending and long_term is None,
         air_available=air_available,
         sources=sources,
     )
+
+
+def build_day(weather: Json, air: Json | None, utc_now: datetime, day: date) -> DayDetail | None:
+    """One completed past day with every hour, or None if the day is not in the data."""
+    recent = parse_recent(weather, air)
+    today = recent.today(utc_now)
+    if day >= today:
+        return None
+    summary = next((d for d in _summaries(recent, today, MAX_DAYS + 2) if d.date == day), None)
+    if summary is None:
+        return None
+    hours = day_hours(
+        day,
+        weather_times=recent.weather_times,
+        weather=recent.weather,
+        air_times=recent.air_times,
+        pm25=recent.air.get("pm2_5", []),
+    )
+    sources = [WEATHER_SOURCE] + ([AIR_SOURCE] if summary.pm2_5_mean is not None else [])
+    return DayDetail(location=recent.location, summary=summary, hours=hours, sources=sources)
 
 
 def _long_term(archive: Json | None, today: date, yesterday_high: float | None) -> LongTermRecords | None:
@@ -117,40 +178,60 @@ def _long_term(archive: Json | None, today: date, yesterday_high: float | None) 
     return long_term_records(dates, highs, lows, today=today, yesterday_high=yesterday_high)
 
 
+def _module_clock() -> datetime:
+    return utc_now()  # looked up at call time, so a patched `utc_now` is used
+
+
 class HistoryService:
     """Fetches recent hourly weather and air, plus the long-term archive, with caching.
 
-    Weather is required; air quality and the archive are best effort, so the history still
-    shows when one of those providers is down.
+    The last 90 days are fetched once per place and shared by every period and day view.
+    Weather is required; air quality and the archive are best effort. The archive (1991 to
+    now) can take a minute, so it loads in the background and is never waited on: reports
+    say `long_term_pending` until it arrives.
     """
+
+    MAX_ARCHIVE_LOADS = 8
 
     def __init__(
         self,
         client: httpx.AsyncClient,
         settings: Settings,
-        utc_clock: Callable[[], datetime] = lambda: datetime.now(UTC),
+        utc_clock: Callable[[], datetime] | None = None,
     ) -> None:
         self._client = client
-        self._clock = utc_clock
-        self._recent: TTLCache[tuple[float, float, int], tuple[Json, Json | None]] = TTLCache(
-            settings.history_cache_ttl_s
-        )
-        self._archive: TTLCache[tuple[float, float], Json | None] = TTLCache(settings.archive_cache_ttl_s)
+        self._clock = utc_clock or _module_clock
+        self._archive_timeout_s = settings.archive_timeout_s
+        self._recent: TTLCache[tuple[float, float], tuple[Json, Json | None]] = TTLCache(settings.history_cache_ttl_s)
+        self._archive: TTLCache[tuple[float, float], Json] = TTLCache(settings.archive_cache_ttl_s)
+        self._archive_failed: TTLCache[tuple[float, float], bool] = TTLCache(settings.archive_retry_s)
+        self._archive_loads: dict[tuple[float, float], asyncio.Task[None]] = {}
 
     async def report(self, latitude: float, longitude: float, days: int) -> HistoryReport:
         lat, lon = round(latitude, 2), round(longitude, 2)
         days = max(1, min(days, MAX_DAYS))
-        now = self._clock()
-        recent, archive = await asyncio.gather(self._recent_payloads(lat, lon, days), self._archive_payload(lat, lon))
-        return build_history(recent[0], recent[1], archive, now, days)
+        weather, air = await self._recent_payloads(lat, lon)
+        archive, pending = self._archive_or_start((lat, lon))
+        return build_history(weather, air, archive, self._clock(), days, archive_pending=pending)
 
-    async def _recent_payloads(self, lat: float, lon: float, days: int) -> tuple[Json, Json | None]:
-        key = (lat, lon, days)
+    async def day(self, latitude: float, longitude: float, day: date) -> DayDetail | None:
+        lat, lon = round(latitude, 2), round(longitude, 2)
+        weather, air = await self._recent_payloads(lat, lon)
+        return build_day(weather, air, self._clock(), day)
+
+    async def _recent_payloads(self, lat: float, lon: float) -> tuple[Json, Json | None]:
+        key = (lat, lon)
         cached = self._recent.get(key)
         if cached is not None:
             return cached
-        # `days` past days plus today; today is still in progress, so the engine drops it.
-        common: Params = {"latitude": lat, "longitude": lon, "timezone": "auto", "past_days": days, "forecast_days": 1}
+        # MAX_DAYS past days plus today; today is still in progress, so the engine drops it.
+        common: Params = {
+            "latitude": lat,
+            "longitude": lon,
+            "timezone": "auto",
+            "past_days": MAX_DAYS,
+            "forecast_days": 1,
+        }
         weather, air = await asyncio.gather(
             fetch_json(self._client, WEATHER_URL, {**common, "hourly": ",".join(_WEATHER_FIELDS.values())}),
             fetch_json(self._client, AIR_URL, {**common, "hourly": ",".join(_AIR_FIELDS.values())}),
@@ -163,11 +244,20 @@ class HistoryService:
             self._recent.set(key, result)
         return result
 
-    async def _archive_payload(self, lat: float, lon: float) -> Json | None:
-        key = (lat, lon)
+    def _archive_or_start(self, key: tuple[float, float]) -> tuple[Json | None, bool]:
+        """The cached archive, or start loading it in the background. Returns (archive, pending)."""
         cached = self._archive.get(key)
         if cached is not None:
-            return cached
+            return cached, False
+        if key in self._archive_loads:
+            return None, True
+        if self._archive_failed.get(key) or len(self._archive_loads) >= self.MAX_ARCHIVE_LOADS:
+            return None, False
+        self._archive_loads[key] = asyncio.create_task(self._load_archive(key))
+        return None, True
+
+    async def _load_archive(self, key: tuple[float, float]) -> None:
+        lat, lon = key
         end = self._clock().date() - timedelta(days=ARCHIVE_LAG_DAYS)
         params: Params = {
             "latitude": lat,
@@ -178,8 +268,20 @@ class HistoryService:
             "daily": "temperature_2m_max,temperature_2m_min",
         }
         try:
-            data = await fetch_json(self._client, ARCHIVE_URL, params)
+            data = await fetch_json(self._client, ARCHIVE_URL, params, timeout_s=self._archive_timeout_s)
         except UpstreamError:
-            return None
-        self._archive.set(key, data)
-        return data
+            self._archive_failed.set(key, True)
+        else:
+            self._archive.set(key, data)
+        finally:
+            self._archive_loads.pop(key, None)
+
+    async def wait_for_archive(self) -> None:
+        """Let background archive loads finish (used by tests)."""
+        await asyncio.gather(*self._archive_loads.values(), return_exceptions=True)
+
+    async def aclose(self) -> None:
+        """Cancel background loads at shutdown."""
+        for task in self._archive_loads.values():
+            task.cancel()
+        await self.wait_for_archive()
