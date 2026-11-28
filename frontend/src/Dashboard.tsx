@@ -1,5 +1,5 @@
 import { Clock, History, Home, Leaf, MapPin, PhoneCall, PlayCircle, Plus, ShieldCheck, Sparkles, TrainFront, Wind } from "lucide-react";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AirDashboard } from "./components/AirDashboard";
 import { BestWindowChart } from "./components/BestWindowChart";
 import { CivicDrafter } from "./components/CivicDrafter";
@@ -194,6 +194,21 @@ export default function Dashboard({ startDemo = false }: { startDemo?: boolean }
   // During the guided demo the view follows the demo step; afterwards it returns to the user's choice.
   const view: View = demo.current ? (VIEW_FOR[demo.current.target] ?? "today") : chosenView;
   const viewRefs = useRef<Partial<Record<View, HTMLDivElement | null>>>({});
+
+  // Typing or following an address such as /app#history (or #sos) while the app is open switches tabs too.
+  useEffect(() => {
+    const onHash = () => {
+      const anchor = window.location.hash.slice(1);
+      setChosenView(viewFromHash());
+      window.setTimeout(() => {
+        const target = anchor && !VIEWS.some((v) => v.id === anchor) ? document.getElementById(anchor) : null;
+        if (target) target.scrollIntoView?.({ block: "start" });
+        else window.scrollTo?.({ top: 0 });
+      }, 0);
+    };
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
 
   const openView = (next: View, focusId?: string) => {
     setChosenView(next);
