@@ -24,6 +24,7 @@ const MAX_REQUESTS = 8;
 
 let relayId: string | null = null;
 const inFlight = new Map<string, Promise<void>>();
+let handovers: Promise<unknown> = Promise.resolve();
 
 /** Header to send with API requests once this browser has relayed data. */
 export function relayHeaders(): Record<string, string> {
@@ -76,18 +77,24 @@ export async function relay(requests: ProviderRequest[], signal?: AbortSignal): 
     const settled = await Promise.allSettled(requests.map((item) => fetchProvider(item, signal)));
     const responses = settled.flatMap((s) => (s.status === "fulfilled" ? [s.value] : []));
     if (responses.length === 0) return;
-    const receipt = await fetch("/api/relay", {
-      method: "POST",
-      headers: { Accept: "application/json", "Content-Type": "application/json" },
-      body: JSON.stringify({ ...(relayId ? { id: relayId } : {}), responses }),
-      signal,
-    });
-    if (!receipt.ok) return;
-    const body = (await receipt.json()) as { id?: unknown };
-    if (typeof body.id === "string") {
-      relayId = body.id;
-      sent = true;
-    }
+    // Hand-overs run one at a time, so every one after the first joins the same relay id.
+    const post = async () => {
+      const receipt = await fetch("/api/relay", {
+        method: "POST",
+        headers: { Accept: "application/json", "Content-Type": "application/json" },
+        body: JSON.stringify({ ...(relayId ? { id: relayId } : {}), responses }),
+        signal,
+      });
+      if (!receipt.ok) return;
+      const body = (await receipt.json()) as { id?: unknown };
+      if (typeof body.id === "string") {
+        relayId = body.id;
+        sent = true;
+      }
+    };
+    const turn = handovers.then(post);
+    handovers = turn.catch(() => undefined);
+    await turn;
   })();
   inFlight.set(key, job);
   try {
@@ -102,4 +109,5 @@ export async function relay(requests: ProviderRequest[], signal?: AbortSignal): 
 export function resetRelay(): void {
   relayId = null;
   inFlight.clear();
+  handovers = Promise.resolve();
 }

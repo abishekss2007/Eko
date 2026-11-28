@@ -130,3 +130,17 @@ def test_hub_expires_and_caps_entries() -> None:
     hub.block("https://air-quality-api.open-meteo.com/v1/air-quality")
     assert hub.blocked("https://archive-api.open-meteo.com/v1/archive")
     assert not hub.blocked("https://photon.komoot.io/api/")
+
+
+async def test_history_asks_for_missing_air_in_the_background(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(history_service, "utc_now", lambda: NOW)
+    calls: list[httpx.Request] = []
+    params = {**PLACE, "days": 7}
+    async with api_client(transport=refusing(calls)) as client:
+        relay = (await client.get("/api/history", params=params)).json()["relay"]
+        weather_only = [item for item in answers(relay, transport()) if "air-quality" not in item["url"]]
+        relay_id = (await client.post("/api/relay", json={"responses": weather_only})).json()["id"]
+        report = await client.get("/api/history", params=params, headers={"X-Relay-Id": relay_id})
+    assert report.status_code == 200
+    wanted = json.loads(report.headers["X-Relay-Wanted"])
+    assert "https://air-quality-api.open-meteo.com/v1/air-quality" in [item["url"] for item in wanted]

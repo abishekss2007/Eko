@@ -240,6 +240,11 @@ class HistoryService:
         )
         if isinstance(weather, BaseException):
             raise UpstreamError("Weather history is unavailable") from weather
+        ctx = relay.current()
+        if isinstance(air, BaseException) and ctx is not None and ctx.active:
+            # Weather arrived from the browser but air did not: ask for it in the background.
+            ctx.wanted.extend(ctx.needed)
+            ctx.needed.clear()
         result = (weather, None if isinstance(air, BaseException) else air)
         if result[1] is not None and not relay.is_active():
             self._recent.set(key, result)
