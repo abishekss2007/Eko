@@ -12,7 +12,7 @@ import { ForecastSheet } from "./components/ForecastSheet";
 import { HistoryPanel } from "./components/HistoryPanel";
 import { HouseholdEditor } from "./components/HouseholdEditor";
 import { ImpactTracker } from "./components/ImpactTracker";
-import { InstallCard } from "./components/InstallCard";
+import { InstallButton } from "./components/InstallButton";
 import { IndoorPlanner } from "./components/IndoorPlanner";
 import { LocationBar, QUICK_PICKS } from "./components/LocationBar";
 import { Section } from "./components/Section";
@@ -290,6 +290,7 @@ export default function Dashboard({ startDemo = false }: { startDemo?: boolean }
             ];
           })}
         </ul>
+        <InstallButton variant="menu" className="mt-4 hidden border-t border-slate-900/10 pt-4 lg:block" />
         <div className="card mt-auto hidden p-4 text-sm text-slate-700 lg:block">
           <p className="mb-1 font-bold text-slate-950">Private by design</p>
           Your family is saved to your account. The AI only ever sees codes like Member_1, never names.
@@ -299,7 +300,11 @@ export default function Dashboard({ startDemo = false }: { startDemo?: boolean }
       <div className="lg:pl-64">
         <header id="top" className="safe-top sticky top-0 z-20 border-b border-slate-900/10 bg-slate-50/60 backdrop-blur-xl">
           <div className="mx-auto flex max-w-6xl items-center gap-2 px-3 py-2.5 sm:px-4 2xl:max-w-[1480px]">
-            <Link href="/" className="flex items-center gap-2 text-lg font-black text-slate-950 lg:hidden" aria-label="SaansSafe home">
+            <Link
+              href="/"
+              className="flex items-center gap-2 text-lg font-black text-slate-950 lg:hidden max-[420px]:[header:has(.install-icon)_&]:hidden"
+              aria-label="SaansSafe home"
+            >
               <span aria-hidden="true" className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-iris-light to-iris text-snow">
                 <Wind size={18} />
               </span>
@@ -332,6 +337,7 @@ export default function Dashboard({ startDemo = false }: { startDemo?: boolean }
                 <PlayCircle aria-hidden="true" size={18} />
                 <span className="sr-only sm:not-sr-only">{demo.active ? "Stop demo" : "60-second demo"}</span>
               </button>
+              <InstallButton variant="icon" className="install-icon lg:hidden" />
               <ThemeToggle />
               <a
                 href="#sos"
@@ -612,8 +618,6 @@ export default function Dashboard({ startDemo = false }: { startDemo?: boolean }
               <CivicDrafter context={context} />
             </Section>
           </div>
-
-          <InstallCard />
 
           <footer className="mt-10 border-t border-slate-900/10 pt-6">
             <p className="text-sm text-slate-700">
