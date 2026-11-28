@@ -91,6 +91,18 @@ describe("ForecastSheet", () => {
     expect(days[1]).toHaveTextContent("High 18°");
   });
 
+  it("shows the sky now on the Now pill, matching the big card", () => {
+    const dusk: AirReport = {
+      ...AIR,
+      weather: { ...OUTLOOK, weather_code: 0, is_day: true, hourly: OUTLOOK.hourly.map((h) => ({ ...h, weather_code: 0, is_day: false })) },
+    };
+    const { container } = render(<ForecastSheet report={dusk} />);
+    const pills = container.querySelectorAll("li.pill");
+    // lucide names its icons in the class list: the first pill is the sun, the next one the moon.
+    expect(pills[0]?.querySelector("svg")?.getAttribute("class")).toMatch(/lucide-sun/);
+    expect(pills[1]?.querySelector("svg")?.getAttribute("class")).toMatch(/lucide-moon/);
+  });
+
   it("switches tabs with the arrow keys", async () => {
     render(<ForecastSheet report={WITH_WEATHER} />);
     screen.getByRole("tab", { name: "Hourly Forecast" }).focus();

@@ -100,6 +100,16 @@ describe("App navigation", () => {
     expect(screen.getByRole("button", { name: "Family" })).toHaveAttribute("aria-current", "page");
   });
 
+  it("follows the address when its #view changes while the app is open", async () => {
+    stubFetch();
+    render(<LanguageProvider><App /></LanguageProvider>);
+    expect(screen.getByRole("button", { name: "Today" })).toHaveAttribute("aria-current", "page");
+    window.location.hash = "#history";
+    await waitFor(() => expect(screen.getByRole("button", { name: "History" })).toHaveAttribute("aria-current", "page"));
+    window.location.hash = "#sos";
+    await waitFor(() => expect(screen.getByRole("button", { name: "Family" })).toHaveAttribute("aria-current", "page"));
+  });
+
   it("toggles dark mode and remembers it", async () => {
     stubFetch();
     render(<LanguageProvider><App /></LanguageProvider>);

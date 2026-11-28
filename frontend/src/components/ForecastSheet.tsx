@@ -31,7 +31,13 @@ export function ForecastSheet({ report }: { report: AirReport }) {
   const weather = report.weather ?? null;
   const pmByHour = new Map(report.forecast.map((p) => [p.time.slice(0, 13), p.pm2_5]));
   const hours = weather?.hourly.length
-    ? weather.hourly.map((h) => ({ ...h, pm2_5: pmByHour.get(h.time.slice(0, 13)) ?? null }))
+    ? weather.hourly.map((h, i) => ({
+        ...h,
+        // "Now" shows the sky right now, as the big card does; the hourly value is for the start of the hour
+        // and can still say night just before sunrise, or day just before sunset.
+        ...(i === 0 && weather.weather_code !== null ? { weather_code: weather.weather_code, is_day: weather.is_day } : {}),
+        pm2_5: pmByHour.get(h.time.slice(0, 13)) ?? null,
+      }))
     : report.forecast.map((p) => ({
         time: p.time,
         temperature_c: null,
@@ -113,12 +119,12 @@ export function ForecastSheet({ report }: { report: AirReport }) {
         hidden={tab !== "hourly"}
         className="no-scrollbar mt-4 flex snap-x scroll-px-5 gap-3 overflow-x-auto px-5 pb-2 [&[hidden]]:hidden"
       >
-        <ul className="flex gap-3" aria-label="Next 24 hours">
+        <ul className="flex items-start gap-3" aria-label="Next 24 hours">
           {hours.map((h, i) => {
             const { Icon, tone } = weatherLook(h.weather_code, h.is_day);
             return (
               <li key={h.time} className={`pill ${i === 0 ? "pill-active" : ""}`}>
-                <span className="text-[15px] font-semibold leading-5 tracking-[-0.03em]">{shortHour(h.time, i === 0)}</span>
+                <span className="whitespace-nowrap text-[14px] font-semibold leading-5 tracking-[-0.04em]">{shortHour(h.time, i === 0)}</span>
                 <span className="flex flex-col items-center">
                   {h.weather_code !== null ? (
                     <Icon aria-hidden="true" size={28} strokeWidth={1.6} className={i === 0 ? "text-snow" : tone} />
@@ -150,12 +156,12 @@ export function ForecastSheet({ report }: { report: AirReport }) {
         className="no-scrollbar mt-4 flex snap-x scroll-px-5 gap-3 overflow-x-auto px-5 pb-2 [&[hidden]]:hidden"
       >
         {weather?.daily.length ? (
-          <ul className="flex gap-3" aria-label="Next 7 days">
+          <ul className="flex items-start gap-3" aria-label="Next 7 days">
             {weather.daily.map((d, i) => {
               const { Icon, tone } = weatherLook(d.weather_code, true);
               return (
                 <li key={d.date} className={`pill ${i === 0 ? "pill-active" : ""}`}>
-                  <span className="text-[15px] font-semibold leading-5 tracking-[-0.03em]">{shortDay(d.date, i === 0)}</span>
+                  <span className="whitespace-nowrap text-[14px] font-semibold leading-5 tracking-[-0.04em]">{shortDay(d.date, i === 0)}</span>
                   <span className="flex flex-col items-center">
                     <Icon aria-hidden="true" size={28} strokeWidth={1.6} className={i === 0 ? "text-snow" : tone} />
                     <Rain chance={d.precipitation_probability} active={i === 0} />
