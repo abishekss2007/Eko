@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>SaansSafe: offline</title>
+    <style>
+      html, body { margin: 0; min-height: 100%; background: linear-gradient(156deg, #2e335a, #1c1b33); color: #fff;
+        font-family: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif; }
+      main { max-width: 28rem; margin: 0 auto; padding: 3rem 1.5rem; }
+      a.call { display: block; margin: .75rem 0; padding: 1rem; border-radius: 1.25rem; background: #b91c1c; color: #fff;
+        font-size: 1.25rem; font-weight: 700; text-align: center; text-decoration: none; }
+      button { margin-top: 1.5rem; width: 100%; min-height: 48px; border: 0; border-radius: 1.25rem; background: #48319d;
+        color: #fff; font-size: 1rem; font-weight: 600; }
+      p { color: rgba(235, 235, 245, 0.75); line-height: 1.5; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Can't reach SaansSafe</h1>
+      <p>Check your internet connection, or that the SaansSafe server this app points to is running.</p>
+      <p>In an emergency you can still call:</p>
+      <a class="call" href="tel:108">Ambulance 108</a>
+      <a class="call" href="tel:112">Emergency 112</a>
+      <button type="button" onclick="history.back(); setTimeout(() => location.reload(), 300)">Try again</button>
+    </main>
+  </body>
+</html>

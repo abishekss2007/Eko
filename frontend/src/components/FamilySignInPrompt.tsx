@@ -4,9 +4,9 @@ import { Link } from "../lib/router";
 /** Shown to guests in place of the family editor: adding family members needs an account. */
 export function FamilySignInPrompt() {
   return (
-    <div className="rounded-2xl border-2 border-dashed border-teal-300 bg-teal-50/60 p-5">
+    <div className="rounded-2xl border-2 border-dashed border-brand-300 bg-brand-50/60 p-5">
       <p className="mb-2 flex items-center gap-2 text-lg font-bold text-slate-900">
-        <UsersRound aria-hidden="true" size={22} className="shrink-0 text-teal-700" />
+        <UsersRound aria-hidden="true" size={22} className="shrink-0 text-brand-700" />
         Sign in to add your family
       </p>
       <p className="mb-4 text-slate-700">

@@ -1,0 +1,21 @@
+{
+  "name": "saanssafe-mobile",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Android app shell for SaansSafe (Capacitor). It opens your SaansSafe server full screen.",
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "server": "node scripts/set-server.mjs",
+    "android": "npx cap add android && npx cap sync android",
+    "sync": "npx cap sync android",
+    "apk": "cd android && ./gradlew assembleDebug"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.6.2",
+    "@capacitor/core": "8.6.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.6.2"
+  }
+}

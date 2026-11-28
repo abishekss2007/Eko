@@ -110,17 +110,17 @@
     --yellow-800: 133 77 14;
     --yellow-900: 113 63 18;
     --yellow-950: 66 32 6;
-    --teal-50: 240 253 250;
-    --teal-100: 204 251 241;
-    --teal-200: 153 246 228;
-    --teal-300: 94 234 212;
-    --teal-400: 45 212 191;
-    --teal-500: 20 184 166;
-    --teal-600: 13 148 136;
-    --teal-700: 15 118 110;
-    --teal-800: 17 94 89;
-    --teal-900: 19 78 74;
-    --teal-950: 4 47 46;
+    --brand-50: 245 243 255;
+    --brand-100: 236 232 253;
+    --brand-200: 221 213 250;
+    --brand-300: 194 180 243;
+    --brand-400: 160 137 230;
+    --brand-500: 125 97 212;
+    --brand-600: 96 70 186;
+    --brand-700: 72 49 157;
+    --brand-800: 58 39 128;
+    --brand-900: 45 30 100;
+    --brand-950: 29 19 66;
     --rose-50: 255 241 242;
     --rose-100: 255 228 230;
     --rose-200: 254 205 211;
@@ -135,7 +135,7 @@
   }
   :root[data-theme="dark"] {
     color-scheme: dark;
-    --white: 13 20 38;
+    --white: 47 45 88;
     --red-50: 69 10 10;
     --red-100: 127 29 29;
     --red-200: 153 27 27;
@@ -224,17 +224,17 @@
     --yellow-800: 254 240 138;
     --yellow-900: 254 249 195;
     --yellow-950: 254 252 232;
-    --teal-50: 4 47 46;
-    --teal-100: 19 78 74;
-    --teal-200: 17 94 89;
-    --teal-300: 15 118 110;
-    --teal-400: 13 148 136;
-    --teal-500: 20 184 166;
-    --teal-600: 45 212 191;
-    --teal-700: 94 234 212;
-    --teal-800: 153 246 228;
-    --teal-900: 204 251 241;
-    --teal-950: 240 253 250;
+    --brand-50: 29 19 66;
+    --brand-100: 45 30 100;
+    --brand-200: 58 39 128;
+    --brand-300: 72 49 157;
+    --brand-400: 96 70 186;
+    --brand-500: 125 97 212;
+    --brand-600: 176 160 250;
+    --brand-700: 200 188 255;
+    --brand-800: 222 214 255;
+    --brand-900: 236 232 253;
+    --brand-950: 245 243 255;
     --rose-50: 76 5 25;
     --rose-100: 136 19 55;
     --rose-200: 159 18 57;
@@ -246,29 +246,64 @@
     --rose-800: 254 205 211;
     --rose-900: 255 228 230;
     --rose-950: 255 241 242;
-    --slate-50: 2 6 23;
-    --slate-100: 22 32 52;
-    --slate-200: 39 51 72;
-    --slate-300: 61 75 98;
-    --slate-400: 100 116 139;
-    --slate-500: 148 163 184;
-    --slate-600: 170 182 200;
-    --slate-700: 203 213 225;
-    --slate-800: 226 232 240;
-    --slate-900: 241 245 249;
-    --slate-950: 248 250 252;
+    --slate-50: 24 23 46;
+    --slate-100: 44 42 80;
+    --slate-200: 62 60 104;
+    --slate-300: 86 84 130;
+    --slate-400: 118 116 162;
+    --slate-500: 152 150 192;
+    --slate-600: 180 178 214;
+    --slate-700: 212 210 234;
+    --slate-800: 230 229 244;
+    --slate-900: 246 246 252;
+    --slate-950: 252 252 255;
   }
 
   html {
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+    /* The page behind the glass: a soft lavender day, a deep indigo night sky. */
+    --page: linear-gradient(156deg, #f6f2ff 2%, #dcd0f7 96%);
+    --glow-a: rgb(167 139 250 / 0.45);
+    --glow-b: rgb(244 114 182 / 0.22);
+    --glass: rgb(255 255 255 / 0.72);
+    --glass-strong: rgb(255 255 255 / 0.9);
+    --glass-edge: rgb(255 255 255 / 0.9);
+    --glass-shadow: 0 10px 30px -12px rgb(72 49 157 / 0.35);
+    --pill: rgb(72 49 157 / 0.08);
+    --pill-edge: rgb(72 49 157 / 0.14);
+    --bar: linear-gradient(180deg, rgb(255 255 255 / 0.82), rgb(240 234 255 / 0.95));
+    --bar-edge: rgb(72 49 157 / 0.16);
+    background: #ece5fd;
+  }
+  html[data-theme="dark"] {
+    --page: linear-gradient(156deg, #2e335a 2%, #1c1b33 96%);
+    --glow-a: rgb(123 95 224 / 0.38);
+    --glow-b: rgb(196 39 251 / 0.16);
+    --glass: rgb(72 49 157 / 0.2);
+    --glass-strong: rgb(46 51 90 / 0.92);
+    --glass-edge: rgb(255 255 255 / 0.18);
+    --glass-shadow: 5px 4px 18px 0 rgb(0 0 0 / 0.28);
+    --pill: rgb(72 49 157 / 0.22);
+    --pill-edge: rgb(255 255 255 / 0.2);
+    --bar: linear-gradient(180deg, rgb(58 63 84 / 0.88), rgb(38 44 81 / 0.96));
+    --bar-edge: rgb(255 255 255 / 0.16);
+    background: #1c1b33;
   }
   body {
-    @apply bg-slate-50 text-slate-900;
-    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Helvetica Neue", Arial,
-      sans-serif;
+    @apply text-slate-900;
+    min-height: 100dvh;
+    background:
+      radial-gradient(38rem 38rem at 110% -8%, var(--glow-a), transparent 60%),
+      radial-gradient(34rem 34rem at -20% 70%, var(--glow-b), transparent 60%),
+      var(--page);
+    background-attachment: fixed;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI Variable", "Segoe UI",
+      Roboto, "Noto Sans", "Helvetica Neue", Arial, sans-serif;
     font-feature-settings: "cv11", "ss01";
-    transition: background-color 0.2s ease, color 0.2s ease;
+    overscroll-behavior-y: none;
+    overflow-x: clip;
   }
   h1,
   h2,
@@ -276,7 +311,7 @@
     letter-spacing: -0.015em;
   }
   :focus-visible {
-    outline: 3px solid rgb(var(--blue-600));
+    outline: 3px solid rgb(var(--brand-600));
     outline-offset: 2px;
   }
   @media (prefers-reduced-motion: reduce) {
@@ -295,13 +330,16 @@
 
 @layer components {
   .btn {
-    @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl px-4 py-2 font-semibold transition duration-150 ease-out active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100;
+    @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl px-4 py-2 font-semibold transition duration-150 ease-out active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100;
   }
   .btn-primary {
-    @apply btn bg-teal-700 text-white shadow-sm shadow-teal-900/20 hover:-translate-y-px hover:bg-teal-800 hover:shadow-md;
+    @apply btn bg-iris text-snow shadow-md shadow-iris/30 hover:-translate-y-px hover:bg-iris-hover;
   }
   .btn-secondary {
-    @apply btn border border-slate-300 bg-white text-slate-900 shadow-sm hover:-translate-y-px hover:border-slate-400 hover:bg-slate-50;
+    @apply btn border text-slate-900 hover:-translate-y-px;
+    background: var(--glass);
+    border-color: var(--pill-edge);
+    box-shadow: inset 1px 1px 0 rgb(255 255 255 / 0.25);
   }
   .btn-danger {
     @apply btn bg-[#b91c1c] text-snow shadow-sm shadow-black/20 hover:-translate-y-px hover:bg-[#991b1b] hover:shadow-md;
@@ -310,25 +348,63 @@
     @apply btn bg-snow text-ink-900 hover:bg-ink-100;
   }
   .btn-ghost {
-    @apply btn text-slate-700 hover:bg-slate-100 hover:text-slate-900;
+    @apply btn text-slate-700 hover:bg-slate-900/10 hover:text-slate-900;
   }
   .chip {
-    @apply inline-flex min-h-[44px] items-center rounded-full border border-slate-300 bg-white px-4 font-medium text-slate-800 transition hover:border-teal-600 hover:text-teal-800 aria-pressed:border-teal-700 aria-pressed:bg-teal-700 aria-pressed:text-white;
+    @apply inline-flex min-h-[44px] items-center rounded-full border px-4 font-medium text-slate-800 transition hover:border-brand-600 hover:text-brand-800 aria-pressed:border-iris aria-pressed:bg-iris aria-pressed:text-snow;
+    background: var(--pill);
+    border-color: var(--pill-edge);
   }
   .input {
-    @apply block min-h-[44px] w-full rounded-xl border border-slate-400 bg-white px-3 py-2 text-base text-slate-900 shadow-inner shadow-slate-900/5 transition placeholder:text-slate-500 focus:border-teal-600;
+    @apply block min-h-[44px] w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-base text-slate-900 transition placeholder:text-slate-500 focus:border-brand-600;
+    box-shadow: inset 0 3px 4px rgb(0 0 0 / 0.12);
   }
+  /* Frosted glass card, the design's main surface. */
   .card {
-    @apply rounded-3xl border border-slate-200 bg-white shadow-sm shadow-slate-900/5;
+    @apply rounded-[28px] border;
+    background: var(--glass);
+    border-color: var(--glass-edge);
+    box-shadow: var(--glass-shadow), inset 1px 1px 0 rgb(255 255 255 / 0.22);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    backdrop-filter: blur(18px) saturate(140%);
+  }
+  /* The narrow rounded forecast pill (hour or day). */
+  .pill {
+    @apply relative flex w-[60px] shrink-0 snap-start flex-col items-center gap-3 rounded-[30px] border px-2 py-4 text-slate-900;
+    background: var(--pill);
+    border-color: var(--pill-edge);
+    box-shadow: 5px 4px 10px rgb(0 0 0 / 0.18), inset 1px 1px 0 rgb(255 255 255 / 0.25);
+  }
+  .pill-active {
+    @apply border-white/50 bg-iris text-snow;
+  }
+  /* The bottom tab bar and its raised middle. */
+  .tabbar {
+    background: var(--bar);
+    border-color: var(--bar-edge);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
   }
   .eyebrow {
-    @apply text-xs font-bold uppercase tracking-[0.14em] text-teal-800;
+    @apply text-xs font-bold uppercase tracking-[0.14em] text-brand-800;
   }
   .skip-link {
     @apply sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-50 focus:rounded-lg focus:bg-white focus:p-3 focus:text-blue-900;
   }
   .view-enter {
     animation: view-enter 0.28s ease-out both;
+  }
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
   }
 }
 
@@ -348,4 +424,28 @@
     opacity: 0.35;
     transform: scale(1.08);
   }
+}
+
+/* A few stars on the night sky behind the home screen; hidden in the light theme. */
+.hero-sky {
+  background-image:
+    radial-gradient(1.5px 1.5px at 12% 18%, rgb(255 255 255 / 0.8), transparent),
+    radial-gradient(1px 1px at 28% 42%, rgb(255 255 255 / 0.6), transparent),
+    radial-gradient(1.5px 1.5px at 46% 12%, rgb(255 255 255 / 0.7), transparent),
+    radial-gradient(1px 1px at 64% 32%, rgb(255 255 255 / 0.55), transparent),
+    radial-gradient(1.5px 1.5px at 82% 20%, rgb(255 255 255 / 0.75), transparent),
+    radial-gradient(1px 1px at 90% 56%, rgb(255 255 255 / 0.5), transparent),
+    radial-gradient(1px 1px at 8% 64%, rgb(255 255 255 / 0.5), transparent),
+    radial-gradient(1.5px 1.5px at 72% 70%, rgb(255 255 255 / 0.45), transparent),
+    radial-gradient(1px 1px at 36% 78%, rgb(255 255 255 / 0.4), transparent);
+  opacity: 0;
+}
+[data-theme="dark"] .hero-sky {
+  opacity: 1;
+}
+
+/* Smog drawn as a soft brownish haze that fades out at every edge, so it never looks like a box. */
+.smog-veil {
+  background: radial-gradient(48% 46% at 50% 45%, rgb(190 170 140 / 0.55), rgb(150 135 115 / 0.22) 55%, transparent 100%);
+  filter: blur(8px);
 }

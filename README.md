@@ -32,6 +32,7 @@ Every winter, cold, still air traps smoke and dust over North Indian cities. NAQ
 | 👪 | **Family members need an account** | Guests can use every air, planner and SOS feature, but adding family members needs a free account. Guests see a "Sign in to add your family" prompt, and the server refuses family reads, saves and Family Shield checks without a session (401), so hiding the UI is not the only guard. The guided demo still works for guests with a fixed sample family chosen by the server. |
 | 🧪 | **Demo account** | `demo@saanssafe.app` / `SaansSafe-Demo-2026`, already holding a four-person sample family (Dadi with COPD, Aarav with asthma, Meera pregnant, Raj). The log-in page shows it with a one-tap **Log in to the demo account** button. It is re-created and its family reset on every start; set `DEMO_ACCOUNT=false` to turn it off. |
 | ▶ | **60-second guided demo** | One button: smog spike → today's plan → family alert → SOS script read aloud → commute savings. Uses a demo family without touching saved data. |
+| 📱 | **Mobile app look and install** | A night-sky weather-app design built for phones first: the place, a big temperature, the sky in words and today's high and low on top, a smog haze that thickens with NAQI, and a frosted forecast sheet with **Hourly** and **Weekly** tabs (temperature, sky icon, chance of rain, and forecast PM2.5 per hour from Open-Meteo's forecast). A curved bottom tab bar with a round **+** button that jumps to place search. Dark is the default; light is a lavender variant. Installable as an app (manifest, PNG and maskable icons, install button, iPhone home-screen tags, safe-area insets), and an Android APK through Capacitor (`mobile/`, built by the *Android app* GitHub workflow). |
 
 ---
 
@@ -154,6 +155,11 @@ docker run -p 8080:8080 --env-file backend/.env saanssafe
 Open http://localhost:8080 for the landing page, or http://localhost:8080/app?demo=1 to jump straight into the guided demo.
 
 Accounts live in SQLite at `/app/data/saanssafe.db`. To keep them when the container is rebuilt, add a volume: `docker run -p 8080:8080 --env-file backend/.env -v saanssafe-data:/app/data saanssafe`. If you open the app over plain HTTP from another machine (not `localhost`), set `COOKIE_SECURE=false` so the browser accepts the session cookie.
+
+## Phone app
+
+* **Install from the browser:** open SaansSafe on the phone and tap **Install** on the Today page (Chrome/Edge on Android) or Safari → Share → *Add to Home Screen* on iPhone. Installing needs the server on **https** (or `localhost`).
+* **Android APK:** `mobile/` holds a Capacitor shell that opens your server full screen, with an offline page that can still call 108/112. GitHub → Actions → *Android app* → *Run workflow* with your server address produces a downloadable `app-debug.apk`. Details in [mobile/README.md](mobile/README.md).
 
 ## Run locally
 

@@ -1,7 +1,7 @@
 import defaultColors from "tailwindcss/colors";
 
 // Colours resolve to CSS variables (see index.css) so the whole palette flips for dark mode.
-const FAMILIES = ["slate", "red", "emerald", "sky", "blue", "orange", "amber", "green", "yellow", "teal", "rose"];
+const FAMILIES = ["slate", "red", "emerald", "sky", "blue", "orange", "amber", "green", "yellow", "brand", "rose"];
 const STEPS = ["50", "100", "200", "300", "400", "500", "600", "700", "800", "900", "950"];
 const themed = Object.fromEntries(
   FAMILIES.map((family) => [
@@ -24,6 +24,9 @@ export default {
       snow: "#ffffff",
       sun: "#fcd34d",
       ink: defaultColors.slate,
+      // The night-sky look: deep iris for filled buttons and the active tab, cyan for rain chances.
+      iris: { DEFAULT: "#48319d", light: "#7b5fe0", hover: "#5a3fc0", night: "#1c1b33", dusk: "#2e335a" },
+      rain: "#40cbd8",
       ...themed,
       // CPCB NAQI band colours (assumptions.json). Text colour is chosen per band for 4.5:1 contrast.
       naqi: {

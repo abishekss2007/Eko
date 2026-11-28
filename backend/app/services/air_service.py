@@ -12,6 +12,7 @@ from app.config import Settings
 from app.data import Pollutant, get_assumptions
 from app.engines.aqi import compute_naqi
 from app.engines.climate import detect_inversion
+from app.engines.weather import DAYS_AHEAD, build_outlook
 from app.engines.window import find_best_window, upcoming
 from app.schemas.air import AirReport, CurrentConditions, GeocodeResult, HourlyPoint, Location
 from app.services import places
@@ -24,6 +25,10 @@ WEATHER_URL = "https://api.open-meteo.com/v1/forecast"
 GEOCODE_URL = "https://geocoding-api.open-meteo.com/v1/search"
 PHOTON_URL = "https://photon.komoot.io/api/"
 SOURCE = "Open-Meteo (CAMS air quality, weather forecast)"
+WEATHER_CURRENT = "temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code,is_day"
+WEATHER_HOURLY = "temperature_2m,weather_code,precipitation_probability,is_day"
+WEATHER_DAILY = "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max"
+FOG = 45  # WMO code shown for the simulated smog scenario
 SIM_SOURCE = "Simulated severe winter smog scenario"
 _API_FIELDS: dict[Pollutant, str] = {"pm2_5": "pm2_5", "pm10": "pm10", "no2": "nitrogen_dioxide"}
 TRAILING_HOURS = 24
@@ -90,6 +95,7 @@ def build_report(air: Json, weather: Json, utc_now: datetime, *, simulated: bool
         inversion=detect_inversion(current.temperature_c, current.wind_kmh, current.pm2_5),
         best_window=find_best_window(points, now),
         forecast=upcoming(points, now),
+        weather=build_outlook(weather, now),
         simulated=simulated,
         source=SIM_SOURCE if simulated else SOURCE,
     )
@@ -122,12 +128,34 @@ def simulated_payloads(latitude: float, longitude: float, utc_now: datetime) -> 
             "nitrogen_dioxide": [round(sim.no2 * r, 1) for r in ratio],
         },
     }
+
+    def temp(t: datetime) -> float:
+        # Coldest before dawn, about 8 degrees warmer mid-afternoon: a typical smoggy winter day.
+        return round(sim.temperature_c + 8 * max(0.0, 1 - abs(t.hour + 0.5 - 15) / 9), 1)
+
+    days = [now.date() + timedelta(days=d) for d in range(DAYS_AHEAD)]
     weather = {
         "current": {
             "temperature_2m": sim.temperature_c,
             "relative_humidity_2m": sim.relative_humidity,
             "wind_speed_10m": sim.wind_kmh,
-        }
+            "weather_code": FOG,
+            "is_day": int(6 <= now.hour < 18),
+        },
+        "hourly": {
+            "time": [t.isoformat(timespec="minutes") for t in times],
+            "temperature_2m": [temp(t) for t in times],
+            "weather_code": [FOG if t.hour < 11 or t.hour >= 18 else 1 for t in times],
+            "precipitation_probability": [0] * len(times),
+            "is_day": [int(6 <= t.hour < 18) for t in times],
+        },
+        "daily": {
+            "time": [d.isoformat() for d in days],
+            "weather_code": [FOG] * len(days),
+            "temperature_2m_max": [sim.temperature_c + 8] * len(days),
+            "temperature_2m_min": [sim.temperature_c - 1] * len(days),
+            "precipitation_probability_max": [0] * len(days),
+        },
     }
     return air, weather
 
@@ -189,7 +217,13 @@ class AirService:
                 ),
                 self._get_json(
                     WEATHER_URL,
-                    {**common, "current": "temperature_2m,relative_humidity_2m,wind_speed_10m"},
+                    {
+                        **common,
+                        "current": WEATHER_CURRENT,
+                        "hourly": WEATHER_HOURLY,
+                        "daily": WEATHER_DAILY,
+                        "forecast_days": DAYS_AHEAD,
+                    },
                 ),
             )
             cached = (air, weather)

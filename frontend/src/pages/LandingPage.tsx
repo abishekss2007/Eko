@@ -133,7 +133,7 @@ export function LandingPage() {
           <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map(({ Icon, title, text }) => (
               <li key={title} className="card group p-6 transition hover:-translate-y-1 hover:shadow-lg">
-                <span className="mb-4 grid h-12 w-12 place-items-center rounded-2xl bg-teal-50 text-teal-800 transition group-hover:bg-teal-700 group-hover:text-white">
+                <span className="mb-4 grid h-12 w-12 place-items-center rounded-2xl bg-brand-50 text-brand-800 transition group-hover:bg-iris group-hover:text-snow">
                   <Icon aria-hidden="true" size={24} />
                 </span>
                 <h3 className="mb-1 text-lg font-bold">{title}</h3>
@@ -155,7 +155,7 @@ export function LandingPage() {
             <ol className="grid gap-5 md:grid-cols-3">
               {STEPS.map((step, i) => (
                 <li key={step.title} className="rounded-3xl bg-slate-100 p-6">
-                  <p className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-teal-700 text-lg font-bold text-white" aria-hidden="true">
+                  <p className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-iris text-lg font-bold text-snow" aria-hidden="true">
                     {i + 1}
                   </p>
                   <h3 className="mb-1 text-lg font-bold">{step.title}</h3>

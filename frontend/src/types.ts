@@ -43,6 +43,33 @@ export interface BestWindow {
   category: string;
 }
 
+export interface WeatherHour {
+  time: string;
+  temperature_c: number | null;
+  /** WMO weather interpretation code. */
+  weather_code: number | null;
+  precipitation_probability: number | null;
+  is_day: boolean;
+}
+
+export interface WeatherDay {
+  date: string;
+  weather_code: number | null;
+  temp_max_c: number | null;
+  temp_min_c: number | null;
+  precipitation_probability: number | null;
+}
+
+export interface WeatherOutlook {
+  weather_code: number | null;
+  condition: string | null;
+  is_day: boolean;
+  today_max_c: number | null;
+  today_min_c: number | null;
+  hourly: WeatherHour[];
+  daily: WeatherDay[];
+}
+
 export interface AirReport {
   location: { latitude: number; longitude: number; timezone: string | null };
   current: CurrentConditions;
@@ -50,6 +77,8 @@ export interface AirReport {
   inversion: InversionResult;
   best_window: BestWindow | null;
   forecast: HourlyPoint[];
+  /** Missing from older servers and when the weather forecast is unavailable. */
+  weather?: WeatherOutlook | null;
   simulated: boolean;
   source: string;
 }

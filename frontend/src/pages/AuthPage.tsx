@@ -180,7 +180,7 @@ export function AuthPage({ mode }: Props) {
           </form>
 
           {demo && (
-            <section aria-labelledby="demo-title" className="mt-6 rounded-2xl bg-teal-50 p-4 text-slate-800">
+            <section aria-labelledby="demo-title" className="mt-6 rounded-2xl bg-brand-50 p-4 text-slate-800">
               <h2 id="demo-title" className="font-bold text-slate-900">
                 Try the demo account
               </h2>
@@ -196,7 +196,7 @@ export function AuthPage({ mode }: Props) {
 
           <p className="mt-6 text-center">
             {signingUp ? "Already have an account? " : "New to SaansSafe? "}
-            <Link href={`${signingUp ? "/login" : "/signup"}${window.location.search}`} className="font-semibold text-teal-800 underline underline-offset-4">
+            <Link href={`${signingUp ? "/login" : "/signup"}${window.location.search}`} className="font-semibold text-brand-800 underline underline-offset-4">
               {signingUp ? "Log in" : "Create an account"}
             </Link>
           </p>

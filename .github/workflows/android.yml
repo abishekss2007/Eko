@@ -1,0 +1,59 @@
+name: Android app
+
+# Builds an installable debug APK of the SaansSafe app (a Capacitor shell that opens your server).
+# Run it from the Actions tab with your server address; pull requests build it against the
+# Android emulator's address just to check that the build works.
+on:
+  workflow_dispatch:
+    inputs:
+      server_url:
+        description: "SaansSafe server the app opens, e.g. https://saanssafe.example.com or http://192.168.1.20:8080"
+        required: true
+        default: "http://192.168.1.20:8080"
+  pull_request:
+    paths: ["mobile/**", ".github/workflows/android.yml"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: npm ci --no-audit --no-fund
+      - name: Point the app at the server
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          SAANSSAFE_SERVER_URL: ${{ inputs.server_url }}
+        run: node scripts/set-server.mjs
+      - name: Create the Android project
+        run: npx cap add android && npx cap sync android
+      - name: Apply the SaansSafe icon and splash
+        run: pip install pillow && python scripts/brand_android.py
+      - name: Build the APK
+        run: cd android && ./gradlew assembleDebug --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: saanssafe-debug-apk
+          path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
