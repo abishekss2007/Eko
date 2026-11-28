@@ -2,6 +2,7 @@ import { Eye, EyeOff, LogIn, PlayCircle, UserPlus, Wind } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { fetchDemoAccount } from "../lib/api";
 import { useAuth } from "../lib/auth";
+import { LOGO_MARK, NightSky } from "../components/NightSky";
 import { Link, navigate } from "../lib/router";
 import { ThemeToggle } from "../lib/theme";
 
@@ -76,14 +77,11 @@ export function AuthPage({ mode }: Props) {
   };
 
   return (
-    <div className="relative isolate flex min-h-screen flex-col overflow-hidden bg-ink-950">
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-[#14b8a6] opacity-25 blur-[110px]" />
-        <div className="absolute -bottom-32 -right-24 h-96 w-96 rounded-full bg-[#0284c7] opacity-25 blur-[110px]" />
-      </div>
+    <div className="relative isolate flex min-h-screen flex-col overflow-hidden">
+      <NightSky />
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-5">
         <Link href="/" className="flex items-center gap-2 text-2xl font-black text-snow">
-          <span aria-hidden="true" className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-[#14b8a6] to-[#0284c7]">
+          <span aria-hidden="true" className={LOGO_MARK}>
             <Wind size={20} />
           </span>
           SaansSafe
@@ -91,7 +89,7 @@ export function AuthPage({ mode }: Props) {
         <ThemeToggle className="btn text-snow hover:bg-snow/10" />
       </header>
       <main id="main" className="flex flex-1 items-start justify-center px-4 pb-12 pt-4">
-        <div className="view-enter w-full max-w-md rounded-[2rem] bg-white p-6 shadow-glow ring-1 ring-slate-200 sm:p-8">
+        <div className="view-enter w-full max-w-md rounded-[2rem] bg-white p-6 shadow-glow ring-1 ring-snow/30 sm:p-8">
           <h1 className="mb-1 text-3xl font-black text-slate-900">{signingUp ? "Create your account" : "Welcome back"}</h1>
           <p className="mb-6 text-slate-700">
             {signingUp

@@ -426,7 +426,8 @@
   }
 }
 
-/* A few stars on the night sky behind the home screen; hidden in the light theme. */
+/* A few stars on the night sky: always on the public night hero (.stars), dark theme only behind the home screen (.hero-sky). */
+.stars,
 .hero-sky {
   background-image:
     radial-gradient(1.5px 1.5px at 12% 18%, rgb(255 255 255 / 0.8), transparent),
@@ -438,6 +439,8 @@
     radial-gradient(1px 1px at 8% 64%, rgb(255 255 255 / 0.5), transparent),
     radial-gradient(1.5px 1.5px at 72% 70%, rgb(255 255 255 / 0.45), transparent),
     radial-gradient(1px 1px at 36% 78%, rgb(255 255 255 / 0.4), transparent);
+}
+.hero-sky {
   opacity: 0;
 }
 [data-theme="dark"] .hero-sky {

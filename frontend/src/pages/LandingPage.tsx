@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { NaqiGauge } from "../components/NaqiGauge";
+import { LOGO_MARK, NightSky } from "../components/NightSky";
 import { Link } from "../lib/router";
 import { ThemeToggle } from "../lib/theme";
 
@@ -48,7 +49,7 @@ export function LandingPage() {
       <header className="absolute inset-x-0 top-0 z-10 text-snow">
           <nav aria-label="Main" className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-5">
             <Link href="/" className="flex items-center gap-2 text-2xl font-black text-snow">
-              <span aria-hidden="true" className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-[#14b8a6] to-[#0284c7]">
+              <span aria-hidden="true" className={LOGO_MARK}>
                 <Wind size={20} />
               </span>
               SaansSafe
@@ -58,7 +59,7 @@ export function LandingPage() {
               <Link href="/login" className="btn text-snow ring-1 ring-snow/30 hover:bg-snow/10">
                 Log in
               </Link>
-              <Link href="/signup" className="btn bg-snow text-ink-950 hover:bg-ink-100">
+              <Link href="/signup" className="btn bg-snow text-iris hover:bg-[#ece5fd]">
                 Sign up free
               </Link>
             </div>
@@ -66,31 +67,27 @@ export function LandingPage() {
       </header>
 
       <main id="main">
-          <section aria-labelledby="hero-title" className="relative isolate overflow-hidden bg-ink-950 text-snow">
-            <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
-              <div className="absolute -left-40 -top-40 h-[32rem] w-[32rem] rounded-full bg-[#14b8a6] opacity-25 blur-[120px]" />
-              <div className="absolute -right-32 top-24 h-[28rem] w-[28rem] rounded-full bg-[#c00000] opacity-25 blur-[120px]" />
-              <div className="absolute bottom-0 left-1/3 h-72 w-72 rounded-full bg-[#0284c7] opacity-20 blur-[100px]" />
-            </div>
+          <section aria-labelledby="hero-title" className="relative isolate overflow-hidden rounded-b-[2.5rem] text-snow">
+            <NightSky />
             <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 pb-20 pt-32 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:pt-36">
               <div className="view-enter">
-                <p className="mb-5 inline-flex items-center gap-2 rounded-full bg-snow/10 px-3 py-1 text-sm text-ink-100 ring-1 ring-snow/15">
+                <p className="mb-5 inline-flex items-center gap-2 rounded-full bg-iris/40 px-3 py-1 text-sm text-[#e9e3ff] ring-1 ring-snow/20">
                   <ShieldCheck aria-hidden="true" size={16} /> Built for Indian winters · CPCB NAQI
                 </p>
                 <h1 id="hero-title" ref={heading} className="mb-5 text-5xl font-black leading-[1.05] tracking-tight sm:text-6xl">
                   Breathe safer through{" "}
-                  <span className="bg-gradient-to-r from-[#5eead4] via-[#7dd3fc] to-[#fca5a5] bg-clip-text text-transparent">
+                  <span className="bg-gradient-to-r from-[#c4b5fd] via-[#f0abfc] to-[#40cbd8] bg-clip-text text-transparent">
                     winter smog.
                   </span>
                 </h1>
-                <p className="mb-9 max-w-xl text-lg leading-relaxed text-ink-200 sm:text-xl">
+                <p className="mb-9 max-w-xl text-lg leading-relaxed text-[#ebebf5]/80 sm:text-xl">
                   SaansSafe tells your family when it is safe to step out, who should stay in, what to do at home,
                   and who to call when breathing gets hard. One plan, every morning.
                 </p>
                 <div className="flex flex-wrap gap-3">
                   <Link
                     href="/signup"
-                    className="btn bg-[#5eead4] px-6 text-lg text-ink-950 shadow-lg shadow-[#14b8a6]/30 hover:-translate-y-0.5 hover:bg-[#99f6e4]"
+                    className="btn bg-gradient-to-br from-iris-light to-iris px-6 text-lg text-snow shadow-lg shadow-[#7b5fe0]/40 ring-1 ring-snow/25 hover:-translate-y-0.5 hover:from-[#8b71ea] hover:to-iris-hover"
                   >
                     Create free account <ArrowRight aria-hidden="true" size={20} />
                   </Link>
@@ -98,25 +95,25 @@ export function LandingPage() {
                     <PlayCircle aria-hidden="true" size={20} /> Watch the 60-second demo
                   </Link>
                 </div>
-                <p className="mt-5 text-ink-300">
+                <p className="mt-5 text-[#ebebf5]/70">
                   Just looking?{" "}
-                  <Link href="/app" className="font-semibold text-snow underline decoration-[#5eead4] decoration-2 underline-offset-4">
+                  <Link href="/app" className="font-semibold text-snow underline decoration-[#c4b5fd] decoration-2 underline-offset-4">
                     Continue as a guest
                   </Link>
                   . No account needed.
                 </p>
               </div>
 
-              <figure className="view-enter rounded-[2rem] bg-snow/[0.06] p-5 shadow-glow ring-1 ring-snow/10 backdrop-blur sm:p-6">
-                <figcaption className="mb-4 flex items-center justify-between text-sm text-ink-300">
+              <figure className="view-enter rounded-[2rem] bg-iris/25 p-5 shadow-glow ring-1 ring-snow/20 backdrop-blur-xl sm:p-6">
+                <figcaption className="mb-4 flex items-center justify-between gap-2 text-sm text-[#ebebf5]/70">
                   <span>Example: a severe smog morning in Delhi</span>
                   <span className="rounded-full bg-sun px-2 py-0.5 text-xs font-bold text-ink-950">Live demo</span>
                 </figcaption>
                 <NaqiGauge value={418} category="Severe" size="md" />
-                <p className="mb-4 mt-3 text-center font-semibold text-ink-100">Cold, still air is trapping smog near the ground.</p>
-                <div className="rounded-2xl bg-gradient-to-br from-[#991b1b] to-[#881337] p-4 text-snow">
+                <p className="mb-4 mt-3 text-center font-semibold text-snow">Cold, still air is trapping smog near the ground.</p>
+                <div className="rounded-2xl bg-gradient-to-br from-[#991b1b] to-[#86198f] p-4 text-snow">
                   <p className="mb-2 text-lg font-bold">Today: keep Dadi indoors. Go out only 2–4 PM.</p>
-                  <ul className="list-disc space-y-1 pl-5 text-ink-100">
+                  <ul className="list-disc space-y-1 pl-5 text-snow/90">
                     <li>Run the purifier in Dadi&apos;s room, doors closed.</li>
                     <li>Wet-mop today, no incense.</li>
                     <li>Take the metro at 11:00 to cut PM2.5 by 60%.</li>
@@ -143,7 +140,7 @@ export function LandingPage() {
           </ul>
         </section>
 
-        <section aria-labelledby="how-title" className="bg-white">
+        <section aria-labelledby="how-title">
           <div className="mx-auto max-w-6xl px-4 py-14">
             <h2 id="how-title" className="mb-2 text-3xl font-extrabold">
               Code calculates. Gemini explains.
@@ -154,7 +151,7 @@ export function LandingPage() {
             </p>
             <ol className="grid gap-5 md:grid-cols-3">
               {STEPS.map((step, i) => (
-                <li key={step.title} className="rounded-3xl bg-slate-100 p-6">
+                <li key={step.title} className="card p-6">
                   <p className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-iris text-lg font-bold text-snow" aria-hidden="true">
                     {i + 1}
                   </p>
@@ -176,9 +173,9 @@ export function LandingPage() {
               holds just your name and e-mail. The server sees family members only as codes like Member_1.
             </p>
           </div>
-          <div className="flex flex-col justify-center gap-3 rounded-3xl bg-emerald-50 p-6 ring-1 ring-emerald-200">
-            <p className="flex items-center gap-2 text-lg font-bold text-emerald-950">
-              <Leaf aria-hidden="true" size={22} /> Ready when the smog is.
+          <div className="flex flex-col justify-center gap-3 card p-6">
+            <p className="flex items-center gap-2 text-lg font-bold text-slate-900">
+              <Leaf aria-hidden="true" size={22} className="text-brand-700" /> Ready when the smog is.
             </p>
             <div className="flex flex-wrap gap-3">
               <Link href="/signup" className="btn-primary">
@@ -192,7 +189,7 @@ export function LandingPage() {
         </section>
       </main>
 
-      <footer className="border-t border-slate-200 bg-white">
+      <footer className="border-t border-slate-900/10">
         <p className="mx-auto max-w-6xl px-4 py-6 text-sm text-slate-700">
           SaansSafe gives general air-quality guidance, not medical advice. In an emergency call 108 or 112. Air data:
           Open-Meteo (CAMS). Index: CPCB NAQI.
