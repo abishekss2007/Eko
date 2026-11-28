@@ -90,7 +90,7 @@ def _reply(schema_output: BaseModel) -> FakeModel:
 
 async def test_grounded_gemini_outputs_are_used() -> None:
     plan_reply = PlanNarrative(
-        headline="Severe smog, NAQI 418: keep Member_1 inside.", steps=["Go out 14:00 to 16:00 only."]
+        headline="Severe smog, NAQI 418: keep Member_1 inside.", steps=["Go out only in the cleaner afternoon window."]
     )
     civic_reply = CivicDraft(subject="Burning in Sector 62", body="NAQI is 418. Burning at 7 must stop.")
     async with api_client(signed_in=True, model=_reply(plan_reply)) as client:
