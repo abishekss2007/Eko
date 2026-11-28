@@ -56,6 +56,8 @@ export interface AirReport {
 
 export interface GeocodeResult {
   name: string;
+  /** City or district a locality belongs to. */
+  area?: string | null;
   admin1: string | null;
   country: string | null;
   latitude: number;

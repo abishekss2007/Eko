@@ -1,4 +1,4 @@
-"""Dashboard data: live or simulated air report, and city search."""
+"""Dashboard data: live or simulated air report, and place search."""
 
 from typing import Annotated
 
@@ -32,7 +32,7 @@ async def air_report(
 async def geocode(
     request: Request,
     service: AirDep,
-    q: Annotated[str, Query(min_length=2, max_length=80, pattern=r"^[\w\s,.'-]+$")],
+    q: Annotated[str, Query(min_length=2, max_length=80, pattern=r"^[\w\s,.'()&/-]+$")],
 ) -> list[GeocodeResult]:
-    """Search for a city or locality by name."""
+    """Search for any city, town, village, locality or landmark by name, worldwide."""
     return await service.geocode(q.strip())
