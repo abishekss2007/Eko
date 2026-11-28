@@ -175,7 +175,8 @@ async def fetch_json(
         response.raise_for_status()
         data = response.json()
     except (httpx.HTTPError, ValueError) as exc:
-        logger.warning("Upstream request failed: %s", type(exc).__name__)
+        status_code = exc.response.status_code if isinstance(exc, httpx.HTTPStatusError) else None
+        logger.warning("Upstream request failed: %s (HTTP %s) for %s", type(exc).__name__, status_code, url)
         raise UpstreamError("Air-quality provider is unavailable") from exc
     if not isinstance(data, dict):
         raise UpstreamError("Unexpected provider response")
