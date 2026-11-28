@@ -79,6 +79,7 @@ class AirReport(BaseModel):
 
 class GeocodeResult(BaseModel):
     name: str
+    area: str | None = Field(default=None, description="City or district a locality belongs to.")
     admin1: str | None = None
     country: str | None = None
     latitude: float

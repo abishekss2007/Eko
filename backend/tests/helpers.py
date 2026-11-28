@@ -43,6 +43,23 @@ def open_meteo_payloads(
     return air, weather
 
 
+PHOTON_PAYLOAD: dict[str, Any] = {
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "geometry": {"type": "Point", "coordinates": [77.2195, 28.6315]},
+            "properties": {"name": "Connaught Place", "city": "New Delhi", "state": "Delhi", "country": "India"},
+        },
+        {
+            "type": "Feature",
+            "geometry": {"type": "Point", "coordinates": [77.231, 28.651]},
+            "properties": {"name": "Delhi", "state": "Delhi", "country": "India"},
+        },
+    ],
+}
+
+
 def mock_transport(
     air: dict[str, Any], weather: dict[str, Any], calls: list[httpx.Request] | None = None
 ) -> httpx.MockTransport:
@@ -67,6 +84,8 @@ def mock_transport(
                     ]
                 },
             )
+        if host.startswith("photon"):
+            return httpx.Response(200, json=PHOTON_PAYLOAD)
         return httpx.Response(200, json=weather)
 
     return httpx.MockTransport(handler)

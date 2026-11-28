@@ -14,6 +14,7 @@ from app.engines.aqi import compute_naqi
 from app.engines.climate import detect_inversion
 from app.engines.window import find_best_window, upcoming
 from app.schemas.air import AirReport, CurrentConditions, GeocodeResult, HourlyPoint, Location
+from app.services import places
 from app.services.cache import TTLCache
 
 logger = logging.getLogger(__name__)
@@ -21,6 +22,7 @@ logger = logging.getLogger(__name__)
 AIR_URL = "https://air-quality-api.open-meteo.com/v1/air-quality"
 WEATHER_URL = "https://api.open-meteo.com/v1/forecast"
 GEOCODE_URL = "https://geocoding-api.open-meteo.com/v1/search"
+PHOTON_URL = "https://photon.komoot.io/api/"
 SOURCE = "Open-Meteo (CAMS air quality, weather forecast)"
 SIM_SOURCE = "Simulated severe winter smog scenario"
 _API_FIELDS: dict[Pollutant, str] = {"pm2_5": "pm2_5", "pm10": "pm10", "no2": "nitrogen_dioxide"}
@@ -182,16 +184,30 @@ class AirService:
         return build_report(*cached, now)
 
     async def geocode(self, query: str) -> list[GeocodeResult]:
-        """City search, cached for a day."""
-        key = query.casefold()
+        """Search any city, town, village, neighbourhood or landmark worldwide, cached for a day.
+
+        Open-Meteo (GeoNames) and Photon (OpenStreetMap) are asked concurrently; the search
+        still works if one of them is down, and fails only if both are.
+        """
+        key = " ".join(query.casefold().split())
         hit = self._geo_cache.get(key)
         if hit is not None:
             return hit
-        data = await self._get_json(GEOCODE_URL, {"name": query, "count": 5, "language": "en", "format": "json"})
-        results = [
-            GeocodeResult.model_validate(item)
-            for item in data.get("results") or []
-            if isinstance(item, dict) and "latitude" in item and "longitude" in item
-        ]
+        head, qualifiers = places.split_query(query)
+        om_params: dict[str, str | int | float] = {"name": head, "count": places.MAX_RESULTS, "language": "en"}
+        om_data, photon_data = await asyncio.gather(
+            self._get_json(GEOCODE_URL, {**om_params, "format": "json"}),
+            self._get_json(PHOTON_URL, {"q": query, "limit": places.MAX_RESULTS, "lang": "en"}),
+            return_exceptions=True,
+        )
+        if isinstance(om_data, BaseException) and isinstance(photon_data, BaseException):
+            raise UpstreamError("Place search is unavailable")
+        open_meteo = [] if isinstance(om_data, BaseException) else places.from_open_meteo(om_data)
+        photon = [] if isinstance(photon_data, BaseException) else places.from_photon(photon_data)
+        if qualifiers:
+            matching, rest = places.partition(open_meteo, qualifiers)
+            results = places.merge(matching, photon, rest)
+        else:
+            results = places.merge(open_meteo, photon)
         self._geo_cache.set(key, results)
         return results
