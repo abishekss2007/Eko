@@ -81,3 +81,33 @@ describe("browser relay", () => {
     expect(parseRequests({})).toEqual([]);
   });
 });
+
+describe("browser relay with parallel requests", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    resetRelay();
+  });
+
+  it("puts every hand-over under the same relay id", async () => {
+    const posted: { id?: string }[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url.startsWith("https://")) return json({ ok: 1 });
+        if (url === "/api/relay") {
+          posted.push(JSON.parse(String(init?.body)) as { id?: string });
+          return json({ id: "relay-id-0123456789abcdef" });
+        }
+        const headers = (init?.headers ?? {}) as Record<string, string>;
+        if (headers["X-Relay-Id"] && posted.length >= 2) return json({ ok: true });
+        const which = url.startsWith("/api/air") ? FORECAST : ARCHIVE;
+        return json({ detail: "x", relay: [which] }, 502);
+      }),
+    );
+    await Promise.all([fetchAir(28.61, 77.21, false), fetchHistory(28.61, 77.21, 7)]);
+    expect(posted).toHaveLength(2);
+    expect(posted[0]?.id).toBeUndefined();
+    expect(posted[1]?.id).toBe("relay-id-0123456789abcdef");
+  });
+});
