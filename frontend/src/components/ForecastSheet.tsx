@@ -1,3 +1,4 @@
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useId, useRef, useState, type KeyboardEvent } from "react";
 import { fmt } from "../lib/format";
 import { shortDay, shortHour, weatherLook } from "../lib/weather";
@@ -40,6 +41,11 @@ export function ForecastSheet({ report }: { report: AirReport }) {
         pm2_5: p.pm2_5,
       }));
 
+  const panels = useRef<Record<Tab, HTMLDivElement | null>>({ hourly: null, weekly: null });
+  // Mouse users on PC cannot swipe the pill strip, so it gets back/forward buttons.
+  const scroll = (direction: 1 | -1) =>
+    panels.current[tab]?.scrollBy({ left: direction * (panels.current[tab]?.clientWidth ?? 300) * 0.8, behavior: "smooth" });
+
   const onKey = (e: KeyboardEvent<HTMLButtonElement>) => {
     if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
     e.preventDefault();
@@ -53,7 +59,7 @@ export function ForecastSheet({ report }: { report: AirReport }) {
       <h2 id={`${baseId}-title`} className="sr-only">
         Forecast
       </h2>
-      <span aria-hidden="true" className="mx-auto mb-1 block h-[5px] w-12 rounded-full bg-slate-900/30" />
+      <span aria-hidden="true" className="mx-auto mb-1 block h-[5px] w-12 rounded-full bg-slate-900/30 lg:invisible" />
       <div role="tablist" aria-label="Forecast" className="relative flex justify-between border-b border-slate-900/15 px-8">
         {TABS.map(({ id, label }) => {
           const active = tab === id;
@@ -86,13 +92,26 @@ export function ForecastSheet({ report }: { report: AirReport }) {
           );
         })}
       </div>
+      <div className="mt-3 hidden justify-end gap-2 px-5 [@media(hover:hover)]:flex">
+        <button type="button" className="btn-secondary !min-h-[36px] !rounded-full !px-2" onClick={() => scroll(-1)}>
+          <ChevronLeft aria-hidden="true" size={18} />
+          <span className="sr-only">Earlier</span>
+        </button>
+        <button type="button" className="btn-secondary !min-h-[36px] !rounded-full !px-2" onClick={() => scroll(1)}>
+          <ChevronRight aria-hidden="true" size={18} />
+          <span className="sr-only">Later</span>
+        </button>
+      </div>
 
       <div
+        ref={(el) => {
+          panels.current.hourly = el;
+        }}
         role="tabpanel"
         id={`${baseId}-hourly`}
         aria-labelledby={`${baseId}-hourly-tab`}
         hidden={tab !== "hourly"}
-        className="no-scrollbar mt-5 flex snap-x [&[hidden]]:hidden gap-3 overflow-x-auto px-5 pb-2"
+        className="no-scrollbar mt-4 flex snap-x scroll-px-5 gap-3 overflow-x-auto px-5 pb-2 [&[hidden]]:hidden"
       >
         <ul className="flex gap-3" aria-label="Next 24 hours">
           {hours.map((h, i) => {
@@ -121,11 +140,14 @@ export function ForecastSheet({ report }: { report: AirReport }) {
       </div>
 
       <div
+        ref={(el) => {
+          panels.current.weekly = el;
+        }}
         role="tabpanel"
         id={`${baseId}-weekly`}
         aria-labelledby={`${baseId}-weekly-tab`}
         hidden={tab !== "weekly"}
-        className="no-scrollbar mt-5 flex snap-x [&[hidden]]:hidden gap-3 overflow-x-auto px-5 pb-2"
+        className="no-scrollbar mt-4 flex snap-x scroll-px-5 gap-3 overflow-x-auto px-5 pb-2 [&[hidden]]:hidden"
       >
         {weather?.daily.length ? (
           <ul className="flex gap-3" aria-label="Next 7 days">
