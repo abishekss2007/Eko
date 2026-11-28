@@ -4,7 +4,7 @@
 # they never live in this file.
 services:
   - type: web
-    name: saanssafe
+    name: saanssafe-api
     runtime: docker
     plan: free
     region: singapore
@@ -19,3 +19,7 @@ services:
         value: "true"
       - key: DEMO_ACCOUNT
         value: "true"
+      # The Vercel frontend proxies /api here (frontend/vercel.json), so sign-in requests carry
+      # its Origin.
+      - key: ALLOWED_ORIGINS
+        value: https://saanssafe.vercel.app

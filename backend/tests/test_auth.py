@@ -85,6 +85,16 @@ async def test_cross_site_post_is_blocked() -> None:
     assert same.status_code == 201
 
 
+async def test_allowed_origin_can_sign_in_through_a_proxy(monkeypatch: pytest.MonkeyPatch) -> None:
+    settings = make_settings(allowed_origins="https://saanssafe.vercel.app, https://other.example")
+    monkeypatch.setattr(auth_router, "get_settings", lambda: settings)
+    async with api_client(settings=settings) as client:
+        proxied = await client.post("/api/auth/signup", json=SIGNUP, headers={"Origin": "https://saanssafe.vercel.app"})
+        evil = await client.post("/api/auth/login", json=SIGNUP, headers={"Origin": "https://evil.example"})
+    assert proxied.status_code == 201
+    assert evil.status_code == 403
+
+
 async def test_secure_cookie_flag_in_production() -> None:
     async with api_client(settings=make_settings(cookie_secure=True)) as client:
         response = await client.post("/api/auth/signup", json=SIGNUP)

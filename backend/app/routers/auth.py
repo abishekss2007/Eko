@@ -20,9 +20,13 @@ def get_auth_service(request: Request) -> AuthService:
 
 
 def same_origin(request: Request) -> None:
-    """CSRF defence in depth (the cookie is also SameSite=Strict): reject cross-site writes."""
+    """CSRF defence in depth (the cookie is also SameSite=Strict): reject cross-site writes.
+
+    Same host is always allowed; ALLOWED_ORIGINS adds a frontend that proxies /api to this server.
+    """
     origin = request.headers.get("origin")
-    if origin and urlsplit(origin).netloc != request.headers.get("host"):
+    host = urlsplit(origin).netloc if origin else None
+    if host and host != request.headers.get("host") and host not in get_settings().allowed_origin_hosts:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Cross-site request blocked")
 
 
