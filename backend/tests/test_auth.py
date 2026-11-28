@@ -102,7 +102,7 @@ async def test_login_is_rate_limited(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 async def test_accounts_persist_in_sqlite_file(tmp_path: Path) -> None:
-    settings = make_settings(database_path=tmp_path / "db" / "accounts.db")
+    settings = make_settings(database_url=None, database_path=tmp_path / "db" / "accounts.db")
     async with api_client(settings=settings) as client:
         await client.post("/api/auth/signup", json=SIGNUP)
     async with api_client(settings=settings) as client:

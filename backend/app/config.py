@@ -38,7 +38,12 @@ class Settings(BaseSettings):
     max_body_bytes: int = Field(default=16 * 1024, gt=0)
 
     auth_rate_limit: str = "10/minute"
-    database_path: Path = Field(default=Path("data/saanssafe.db"), description="SQLite file for accounts.")
+    database_url: SecretStr | None = Field(
+        default=None, description="Postgres URL (e.g. Supabase). Unset uses the SQLite file below."
+    )
+    database_path: Path = Field(
+        default=Path("data/saanssafe.db"), description="SQLite file for accounts when DATABASE_URL is unset."
+    )
     session_days: int = Field(default=7, ge=1, le=90)
     cookie_secure: bool = Field(default=True, description="Send the session cookie over HTTPS only.")
 

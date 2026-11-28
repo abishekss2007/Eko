@@ -7,3 +7,6 @@ pydantic>=2.9
 pydantic-settings>=2.5
 google-genai>=1.20
 slowapi>=0.1.9
+# Postgres driver for DATABASE_URL (Supabase). Binary wheels exist for Windows, macOS and Linux.
+psycopg[binary]>=3.2
+psycopg-pool>=3.2

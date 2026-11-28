@@ -1,0 +1,21 @@
+# Render Blueprint: one Docker web service (FastAPI serves the API and the built frontend).
+# Accounts live in hosted Postgres (Supabase), because Render's free instances have no disk.
+# Secrets are marked sync: false, so Render asks for them when the Blueprint is created and
+# they never live in this file.
+services:
+  - type: web
+    name: saanssafe
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: DEMO_ACCOUNT
+        value: "true"

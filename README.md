@@ -139,7 +139,7 @@ All constants live in [`backend/app/data/assumptions.json`](backend/app/data/ass
 
 ## Testing
 
-- **Backend:** 117 pytest tests, about 97% coverage. Engines (NAQI breakpoints including 273.4 → 418, inversion, window, risk tiers, CADR sizing, budget ranking, commute dose/CO₂ and departure shift, daily plan), grounding checker, sanitizer, cache, Gemini wrapper, and API tests with a mocked Open-Meteo transport: 422 validation, 413 body cap, 429 rate limit, 502 upstream failure, fallback without a key, rejection of invented numbers and dosing, cache hits, and a check that phone numbers never reach the prompt.
+- **Backend:** 163 pytest tests, about 97% coverage; the account tests also run against Postgres in CI. Engines (NAQI breakpoints including 273.4 → 418, inversion, window, risk tiers, CADR sizing, budget ranking, commute dose/CO₂ and departure shift, daily plan), grounding checker, sanitizer, cache, Gemini wrapper, and API tests with a mocked Open-Meteo transport: 422 validation, 413 body cap, 429 rate limit, 502 upstream failure, fallback without a key, rejection of invented numbers and dosing, cache hits, and a check that phone numbers never reach the prompt.
 - **Frontend:** Vitest + Testing Library + vitest-axe: tokenization and PII stripping, `tel:` sanitising, every planner component, the How-we-calculate dialog, impact totals, language switching, the guided demo (fake timers), landing, sign-up, log-in, wrong-password and log-out flows, and full-app flows, with axe accessibility checks (29 tests).
 - **CI:** `.github/workflows/ci.yml` runs ruff, mypy (strict), pytest with coverage, ESLint, TypeScript, Vitest, a production build, and a Docker build with a smoke test.
 
@@ -154,7 +154,21 @@ docker run -p 8080:8080 --env-file backend/.env saanssafe
 
 Open http://localhost:8080 for the landing page, or http://localhost:8080/app?demo=1 to jump straight into the guided demo.
 
-Accounts live in SQLite at `/app/data/saanssafe.db`. To keep them when the container is rebuilt, add a volume: `docker run -p 8080:8080 --env-file backend/.env -v saanssafe-data:/app/data saanssafe`. If you open the app over plain HTTP from another machine (not `localhost`), set `COOKIE_SECURE=false` so the browser accepts the session cookie.
+Accounts live in hosted Postgres when `DATABASE_URL` is set (see [Accounts database](#accounts-database)); otherwise in SQLite at `/app/data/saanssafe.db`, and to keep those when the container is rebuilt add a volume: `docker run -p 8080:8080 --env-file backend/.env -v saanssafe-data:/app/data saanssafe`. If you open the app over plain HTTP from another machine (not `localhost`), set `COOKIE_SECURE=false` so the browser accepts the session cookie.
+
+## Accounts database
+
+SaansSafe stores accounts, sessions and family members in **Postgres when `DATABASE_URL` is set** (we use a free Supabase project) and falls back to a local SQLite file when it isn't, so local development and tests need nothing extra. The backend creates its three tables (`users`, `sessions`, `households`) on start if they're missing, and turns on row level security with no policies so Supabase's public Data API can't read them; only the backend, connecting as the table owner, can.
+
+1. In Supabase, open the project → **Connect** → **Session pooler** and copy the URI (it works over IPv4, which Render needs).
+2. Replace `[YOUR-PASSWORD]` with the database password (Project Settings → Database → *Reset database password* if you don't have it).
+3. Put it in `backend/.env` as `DATABASE_URL=postgresql://postgres.<ref>:<password>@aws-…pooler.supabase.com:5432/postgres` (never commit it).
+
+On start the log shows `Accounts database: postgres`. The demo account is re-seeded there on every start as before. To run the account tests against a throwaway Postgres: `TEST_DATABASE_URL=postgresql://… pytest tests/test_auth.py tests/test_family.py tests/test_database.py` (it empties the tables, so never point it at the real database).
+
+## Deploy to Render
+
+`render.yaml` describes one free Docker web service in Singapore (next to the Supabase project). Render → **New** → **Blueprint** → pick this repository, then paste `DATABASE_URL` and, optionally, `GEMINI_API_KEY` when asked. Render serves it over HTTPS, so `COOKIE_SECURE=true` stays on. Free instances sleep after 15 minutes idle and take about a minute to wake.
 
 ## Phone app
 
